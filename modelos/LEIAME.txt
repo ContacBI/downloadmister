@@ -1,0 +1,3 @@
+Modelos de extrato dos bancos que o app já aceita (PDF).
+Se possível, nomeie cada arquivo com o id do banco no app (ex.: sicoob.pdf, itau.pdf).
+Apague dados de clientes (nomes, CPF/CNPJ, saldos) antes de subir.
