@@ -5,7 +5,8 @@ Uso: python3 comparar_oficial.py oficial.xlsm clientes-nota.csv saida.xlsx
 Vínculo por (cliente resumido, nota). O oficial vem por parcela, então é
 somado por nota antes de comparar parcelas, emissão, valor, vencido e a vencer.
 Abas: Resumo, Matches exatos, Só no oficial, Só em dezembro,
-Valores diferentes e Por cliente.
+Valores diferentes, Por cliente e Inconsistências no oficial
+(parcelas em que valor != vencido + vincendo; nelas o a vencer é recalculado).
 """
 import csv
 import sys
@@ -32,7 +33,7 @@ def nf(s):
 def ler_oficial(path):
     wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
     rows = list(wb["Aging analítico - Contabil"].iter_rows(values_only=True))
-    of = {}
+    of, incons = {}, []
     for r in rows[6:]:
         if not r[1] or r[1] == "Total" or not r[2]:
             continue
@@ -42,7 +43,12 @@ def ler_oficial(path):
         a["valor"] += r[5] or 0
         a["venc"] += r[14] or 0
         a["avenc"] += r[20] or 0
-    return of
+        if abs((r[5] or 0) - (r[14] or 0) - (r[20] or 0)) > TOL:
+            incons.append([r[1].strip(), nf(r[2]), r[4].strftime("%d/%m/%Y"), r[5], r[14] or 0, r[20] or 0])
+    # a vencer = valor - vencido: os totais "vincendo" do oficial têm linhas quebradas
+    for a in of.values():
+        a["avenc"] = a["valor"] - a["venc"]
+    return of, incons
 
 
 def ler_dezembro(path):
@@ -61,7 +67,7 @@ def igual(d, o):
 
 
 def main(oficial, nota, saida):
-    of, dz = ler_oficial(oficial), ler_dezembro(nota)
+    (of, incons), dz = ler_oficial(oficial), ler_dezembro(nota)
     so_of = sorted(k for k in of if k not in dz)
     so_dz = sorted(k for k in dz if k not in of)
     ambos = sorted(k for k in of if k in dz)
@@ -116,12 +122,18 @@ def main(oficial, nota, saida):
         if abs(o - d) > TOL:
             ws.append([c, r2(d), r2(o), r2(o - d)])
 
+    ws = wb.create_sheet("Inconsistências no oficial")
+    ws.append(["Cliente", "Nota", "Vencimento", "Valor", "Total vencido", "Total vincendo (informado)"])
+    for row in incons:
+        ws.append([row[0], row[1], row[2], r2(row[3]), r2(row[4]), r2(row[5])])
+
     for w in wb.worksheets:
         for col in w.columns:
             w.column_dimensions[col[0].column_letter].width = max(len(str(c.value or "")) for c in col[:60]) + 2
     wb.save(saida)
 
     print(f"dez: {len(dz)} notas, valor {tot(dz,'valor'):,.2f} | oficial: {len(of)} notas, valor {tot(of,'valor'):,.2f}")
+    print(f"inconsistências no oficial: {len(incons)}")
     print(f"exatos {len(exatos)} | só oficial {len(so_of)} | só dezembro {len(so_dz)} | diferentes {len(dif)}")
 
 
