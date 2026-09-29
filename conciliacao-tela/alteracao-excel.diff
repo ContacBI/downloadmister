@@ -1,0 +1,57 @@
+--- index.original.html	2026-09-29 18:49:16.377696183 +0000
++++ index.html	2026-09-29 18:49:16.419726528 +0000
+@@ -1829,20 +1829,47 @@
+   }
+ 
+   /* ---- Excel da aba aberta ---- */
++  // Linhas do Excel da lista, iguais às da tela (pintarLista): uma soma (1E x NR) abre uma linha por lançamento do
++  // relatório (1.01, 1.02...), como subLinhasSoma, e os ajustes de juros/desconto vêm logo abaixo da linha a que
++  // pertencem, como linhaAjusteJD. Antes o Excel gerava 1 linha só por soma ("RECEBIMENTO - SOMA DE 4 LANÇAMENTOS").
++  function linhasExcelLista(rows) {
++    var out = [], temAjuste = false;
++    function ajustes(x, w, tipo, textoHist) {
++      ajusteJurosDescontoDeRel(w, tipo).forEach(function (a) {
++        var hist = ROTULO_AJUSTE_JD[tipo][a.tipo] + " - " + textoHist; temAjuste = true;
++        out.push({ seq: "", data: x.l.data, banco: "", d: a.d || "", c: a.c || "", hist: hist, aj: hist, valor: a.valor, vinc: a.tipo === "juros" ? "Juros" : "Desconto" });
++      });
++    }
++    rows.forEach(function (x, i) {
++      var dc = valoresDC(x), sm = SOMA_EXT[x.l.id];
++      if (sm) {
++        sm.itens.forEach(function (it, k) {
++          var ajI = autoHistRel(it, sm.tipo);
++          out.push({ seq: (i + 1) + "." + (k < 9 ? "0" : "") + (k + 1), data: x.l.data, banco: x.c.apelido, d: dc.d, c: dc.c, hist: x.l.descricao, aj: ajI,
++            valor: sm.tipo === "pagar" ? -it.c / 100 : it.c / 100, vinc: "1E x " + sm.itens.length + "R" });
++          ajustes(x, it, sm.tipo, ajI);
++        });
++        return;
++      }
++      var mt = MATCH_EXT[x.l.id], mu = MULTI_EXT[x.l.id], aj = ajEfetivo(x.l);
++      out.push({ seq: String(i + 1), data: x.l.data, banco: x.c.apelido, d: dc.d, c: dc.c, hist: x.l.descricao, aj: aj, valor: x.l.valor, vinc: vinculoTexto(x) });
++      if (mt) ajustes(x, mt.rel, mt.tipo, aj);
++      else if (mu && mu.k === 1) ajustes(x, mu.rel, mu.tipo, aj);
++    });
++    return { linhas: out, temAjuste: temAjuste };
++  }
+   function baixarExcelAba() {
+     if (typeof ExcelBonito === "undefined") { showToast("Gerador de Excel não carregou."); return; }
+     var titulo = "Conciliação " + rotuloMes(MES), abas = [];
+     if (TAB === "extratos" || TAB === "matches") {
+       var mat = TAB === "matches", rows = filtrarLista(mat);
+       if (!rows.length) { showToast("Nada pra exportar."); return; }
+-      var cols = [{ titulo: "Data", chave: "data", tipo: "data" }, { titulo: "Banco", chave: "banco", largura: 28 }, { titulo: "D", chave: "d", largura: 14 }, { titulo: "C", chave: "c", largura: 14 }, { titulo: "Histórico", chave: "hist", largura: 60 }];
++      var xl = linhasExcelLista(rows);
++      var cols = [{ titulo: "#", chave: "seq", largura: 8 }, { titulo: "Data", chave: "data", tipo: "data" }, { titulo: "Banco", chave: "banco", largura: 28 }, { titulo: "D", chave: "d", largura: 14 }, { titulo: "C", chave: "c", largura: 14 }, { titulo: "Histórico", chave: "hist", largura: 60 }];
+       if (mat) cols.push({ titulo: "Histórico ajustado", chave: "aj", largura: 60 });
+-      cols.push({ titulo: "Valor", chave: "valor", tipo: "moeda", total: true }, { titulo: "Vínculo", chave: "vinc", largura: 20 });
+-      abas.push({ nome: mat ? "Matches" : "Extratos", colunas: cols,
+-        linhas: rows.map(function (x) {
+-          var dc = valoresDC(x);
+-          return { data: x.l.data, banco: x.c.apelido, d: dc.d, c: dc.c, hist: x.l.descricao, aj: ajEfetivo(x.l), valor: x.l.valor, vinc: vinculoTexto(x) };
+-        }) });
++      // com linhas de juros/desconto o total do Valor somaria o ajuste junto: nesse caso não totaliza
++      cols.push({ titulo: "Valor", chave: "valor", tipo: "moeda", total: !xl.temAjuste }, { titulo: "Vínculo", chave: "vinc", largura: 20 });
++      abas.push({ nome: mat ? "Matches" : "Extratos", colunas: cols, linhas: xl.linhas });
+     } else {
+       var aba = abaAtual(TAB); if (!aba) { showToast("Nada pra exportar."); return; }
+       var linhas = linhasRelatorio(TAB, aba), cfg = configColunas(TAB, aba), vis = cfg.ordem.filter(function (c) { return cfg.visiveis.indexOf(c) !== -1; });
