@@ -45,24 +45,24 @@ BANCOS = [  # (nome no Mister, sem acento e minúsculo) -> (id do app, nome no a
     ("santander", ("santander", "Santander")),
     ("sicredi", ("sicredi", "Sicredi")),
     ("sicoob", ("sicoob", "Sicoob")),
-    ("cred crea", ("credcrea", "Cred Crea")),
-    ("credcrea", ("credcrea", "Cred Crea")),
+    ("cred crea", ("credcrea", "Credcrea")),
+    ("credcrea", ("credcrea", "Credcrea")),
     ("itau", ("itau", "Itaú")),
     ("caixa", ("caixa", "Caixa Econômica Federal")),
-    ("c6", ("c6", "Banco C6")),
+    ("c6", ("c6", "C6 Bank")),
     ("sofisa", ("sofisa", "Banco Sofisa")),
     ("safra", ("safra", "Banco Safra")),
     ("stone", ("stone", "Stone")),
     ("cora", ("cora", "Cora")),
     ("cresol", ("cresol", "Cresol")),
-    ("daycoval", ("daycoval", "Daycoval")),
-    ("infinitepay", ("infinitypay", "InfinitePay")),
-    ("infinity pay", ("infinitypay", "InfinitePay")),
+    ("daycoval", ("daycoval", "Banco Daycoval")),
+    ("infinitepay", ("infinitypay", "InfinityPay")),
+    ("infinity pay", ("infinitypay", "InfinityPay")),
     ("pagbank", ("pagbank", "PagBank")),
     ("pagseguro", ("pagbank", "PagBank")),
     ("sisprime", ("sisprime", "Sisprime")),
-    ("xp investimentos", ("xp", "XP")),
-    ("banco xp", ("xp", "XP")),
+    ("xp investimentos", ("xp", "XP Investimentos")),
+    ("banco xp", ("xp", "XP Investimentos")),
 ]
 SEM_BANCO = ("planilha_excel", "Planilha Excel (modelo próprio)")
 
@@ -127,7 +127,8 @@ def converter_empresa(cnpj, regras_mister, existente, numeros, tabela_bancos, be
         emp.setdefault("regras", [])
         emp.setdefault("contasBancarias", [])
     else:
-        emp = {"id": str(uuid.uuid4()), "numero": numeros.get(cnpj, ""), "cnpj": cnpj,
+        numero = numeros.get(cnpj) or numeros.get("nome:" + norm(p0.get("parRazaosocial"))) or ""
+        emp = {"id": str(uuid.uuid4()), "numero": numero, "cnpj": cnpj,
                "nome": p0.get("parRazaosocial") or "", "contasBancarias": [], "regras": [], "lancamentos": []}
     aviso, avisados, ignoradas = [], set(), {}
     if not emp["numero"]:
@@ -215,8 +216,12 @@ def main():
     if a.numeros:
         with open(a.numeros, encoding="utf-8-sig", newline="") as f:
             for row in csv.reader(f, delimiter=";"):
-                if len(row) >= 2 and so_digitos(row[0]):
+                if len(row) < 2 or norm(row[0]) == "cnpj":
+                    continue
+                if len(so_digitos(row[0])) == 14:
                     numeros[so_digitos(row[0])] = row[1].strip()
+                if len(row) >= 3 and row[2].strip():  # nome da empresa: vale se o CNPJ foi estragado pelo Excel
+                    numeros["nome:" + norm(row[2])] = row[1].strip()
 
     tabela_bancos = {}
     if a.bancos:

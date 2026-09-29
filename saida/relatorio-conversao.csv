@@ -1,24 +1,24 @@
 ﻿empresa;cnpj;arquivo;situacao;regras_no_mister;regras_novas;das_quais_beneficiario;duplicadas_ignoradas;atencao
-NAYARA HOSHINO RIBEIRO QUITERIO;22318534000101;novas/2ce7c0ec-68fb-485e-8557-0f38d0a1c160.json;nova;250;249;0;1;sem número da empresa | mesma descrição e banco com contas diferentes: brasilprev seguros (PAGAMENTO): contas ['2730', '401']
+NAYARA HOSHINO RIBEIRO QUITERIO;22318534000101;novas/df84609f-7459-4e8f-b4f6-c5b85e07c9e8.json;nova;250;249;0;1;mesma descrição e banco com contas diferentes: brasilprev seguros (PAGAMENTO): contas ['2730', '401']
 METALURGICA GAVIAO LTDA;01282597000177;atualizadas/da60bd7c-fc09-4ce9-81ef-815fae92a2be.json;existente (regras acrescentadas);281;280;31;1;
-B3W LTDA;32589565000142;novas/bae969f7-e078-405b-a68f-dd83a5c3a8b2.json;nova;164;162;14;2;sem número da empresa | mesma descrição e banco com contas diferentes: thais da silva estampreski (PAGAMENTO): contas ['2851', '3455']
-BELEZA RENOVADA COMERCIO VAREJISTA DE COSMETICOS E PERFUMARIA LTDA;33487269000101;novas/21abe45e-9211-4473-a109-89cdf67e6627.json;nova;428;427;28;1;sem número da empresa
-R.S. COMERCIO DE PRODUTOS ALIMENTICIOS LTDA;34677790000166;novas/a4c0db12-2d6d-4f3c-8c2e-a0f353908a45.json;nova;74;68;2;6;sem número da empresa
-PURO SABOR DISTRIBUIDORA DE ALIMENTOS LONDRINA LTDA;13601956000190;novas/c957cf0a-b61e-406c-9a0c-7076fa41525f.json;nova;32;32;0;0;sem número da empresa
-REFORBENS - PECAS E SERVICOS DE VEICULOS AUTOMOTORES LTDA;09595066000146;novas/bca67b43-ebd2-460f-bc85-1424b254c5b0.json;nova;365;331;65;34;"sem número da empresa | mesma descrição e banco com contas diferentes: truck ar condicionado ltda (PAGAMENTO): contas ['2759', '2851']; l f a acessorios e servicos (PAGAMENTO): contas ['2851', '3826']"
-TRUCK BRASIL - PECAS E SERVICOS DE VEICULOS AUTOMOTORES LTDA;41578457000165;novas/5b565190-763d-46da-bebf-e10a655b1036.json;nova;25;25;1;0;sem número da empresa
-W & L COMERCIO DE TINTAS LTDA;20782550000117;novas/0712df84-48a1-4c2a-870c-48b7ac137b4a.json;nova;110;108;20;1;sem número da empresa | 1 regra(s) ignorada(s) do tipo INFORMACAO_ADICIONAL
-B3N LTDA;57183803000146;novas/72775260-7530-4921-ae97-150c27cde890.json;nova;18;18;4;0;sem número da empresa
-LOTERICA VILA CASONI LTDA;80356025000161;novas/5858fc1d-90f7-4b64-95a3-609e2d41ab54.json;nova;99;99;0;0;sem número da empresa
+B3W LTDA;32589565000142;novas/8b51bfcb-a784-4987-bf37-b08260cbca45.json;nova;164;162;14;2;mesma descrição e banco com contas diferentes: thais da silva estampreski (PAGAMENTO): contas ['2851', '3455']
+BELEZA RENOVADA COMERCIO VAREJISTA DE COSMETICOS E PERFUMARIA LTDA;33487269000101;novas/06558b95-8da8-477a-ba47-9d4b2f476d82.json;nova;428;427;28;1;
+R.S. COMERCIO DE PRODUTOS ALIMENTICIOS LTDA;34677790000166;novas/db593c02-f9f0-49bf-86ae-eaaa22765df4.json;nova;74;68;2;6;
+PURO SABOR DISTRIBUIDORA DE ALIMENTOS LONDRINA LTDA;13601956000190;novas/a50ccb17-18ad-4a2f-b4c0-7973b62a8f21.json;nova;32;32;0;0;
+REFORBENS - PECAS E SERVICOS DE VEICULOS AUTOMOTORES LTDA;09595066000146;novas/c41a4c38-1935-4a84-a5d4-41f3db59499e.json;nova;365;331;65;34;"mesma descrição e banco com contas diferentes: truck ar condicionado ltda (PAGAMENTO): contas ['2759', '2851']; l f a acessorios e servicos (PAGAMENTO): contas ['2851', '3826']"
+TRUCK BRASIL - PECAS E SERVICOS DE VEICULOS AUTOMOTORES LTDA;41578457000165;novas/436780d3-cf6e-4702-9c04-f7d01eea7e76.json;nova;25;25;1;0;
+W & L COMERCIO DE TINTAS LTDA;20782550000117;novas/6d6bbc75-af45-4d50-b2c7-eec0bc52f16c.json;nova;110;108;20;1;1 regra(s) ignorada(s) do tipo INFORMACAO_ADICIONAL
+B3N LTDA;57183803000146;novas/8f4c4258-160b-4734-be9c-845f1f98f1c4.json;nova;18;18;4;0;
+LOTERICA VILA CASONI LTDA;80356025000161;novas/19c149cd-d298-4378-a680-551cb1a282dd.json;nova;99;99;0;0;
 INSTITUTO LONDRINENSE DE EDUCACAO DE SURDOS;78622370000158;atualizadas/0a0ac2e5-b9d1-4e21-822f-c6baae0edc83.json;existente (regras acrescentadas);24;24;0;0;
 MG INDUSTRIA E COMERCIO DE MOVEIS DE ACO LTDA;35414876000169;atualizadas/ddd8036d-3eab-4fe2-9820-a635318aef2e.json;existente (regras acrescentadas);31;31;12;0;
-VARMEC COMERCIO DE PECAS LTDA;32545313000111;novas/b3168392-ba9a-41fa-bc27-3d26aa0ad207.json;nova;121;120;0;1;sem número da empresa
-RHYOS ENGENHARIA LTDA;34278356000103;novas/4143dbb8-4baf-444e-abf1-08b7744fc4de.json;nova;136;136;0;0;sem número da empresa
-BAUM, BEIRIGO & MILANI ADVOGADOS ASSOCIADOS;30177386000172;novas/d7405705-962f-479d-8ac2-3ecc6aa366fb.json;nova;43;43;12;0;sem número da empresa
-D. L. A. - SERVICOS DE PREPARACAO DE DOCUMENTOS LTDA;06142174000175;novas/5608e7b0-ce74-45f1-afda-3bf848a80f1a.json;nova;289;287;53;2;sem número da empresa
-ALYA NEGOCIOS LTDA;55927088000183;novas/3e2f03cd-04a1-4159-99f9-7603d27ba562.json;nova;42;42;0;0;sem número da empresa
-LOJAS JOSYMIX LTDA;37873179000100;novas/fadc0633-8135-4bbe-a059-3f803fc0fccc.json;nova;73;73;0;0;sem número da empresa
-MICROMEDICAL IMPLANTES DO BRASIL LTDA;07326871000220;novas/a9166005-8020-43bb-8e0d-e30976870121.json;nova;23;23;0;0;sem número da empresa
-RECON DIESEL LTDA;45595183000173;novas/16bc154b-8dc6-4779-875c-b2f06d169b25.json;nova;58;58;0;0;sem número da empresa
-PONTO MIX OUTLET LTDA;53700288000173;novas/7111a008-167e-4058-ab2c-22d390d8a67d.json;nova;116;116;0;0;sem número da empresa
-TC INDUSTRIA E COMERCIO DE METAIS LTDA;51899993000116;novas/143c7f3b-10a8-4341-8108-4490917dd713.json;nova;28;28;0;0;sem número da empresa
+VARMEC COMERCIO DE PECAS LTDA;32545313000111;novas/684973ce-1a91-4a24-8da1-8b28b03ab863.json;nova;121;120;0;1;
+RHYOS ENGENHARIA LTDA;34278356000103;novas/7a5ecfc9-05ec-4be0-a7be-2e772ada3799.json;nova;136;136;0;0;
+BAUM, BEIRIGO & MILANI ADVOGADOS ASSOCIADOS;30177386000172;novas/9c67549e-6f39-4f23-b544-001050b6556d.json;nova;43;43;12;0;
+D. L. A. - SERVICOS DE PREPARACAO DE DOCUMENTOS LTDA;06142174000175;novas/c058c31d-03bb-4f0c-9aee-e594d280906a.json;nova;289;287;53;2;
+ALYA NEGOCIOS LTDA;55927088000183;novas/ccff0610-be7f-4fd5-8f9b-85e21dee4119.json;nova;42;42;0;0;
+LOJAS JOSYMIX LTDA;37873179000100;novas/133f4ecc-b450-4edc-8e90-42cacf84b3cd.json;nova;73;73;0;0;
+MICROMEDICAL IMPLANTES DO BRASIL LTDA;07326871000220;novas/e4717d08-7ecb-43c0-9463-660ec803aa99.json;nova;23;23;0;0;
+RECON DIESEL LTDA;45595183000173;novas/5d6082ab-9aec-492c-9ea7-c2a9f02a032f.json;nova;58;58;0;0;
+PONTO MIX OUTLET LTDA;53700288000173;novas/5922020c-2a66-4d64-8fa4-30c4824fffc3.json;nova;116;116;0;0;
+TC INDUSTRIA E COMERCIO DE METAIS LTDA;51899993000116;novas/ca986ba6-b7cb-4f92-a4ea-7b984cfd0555.json;nova;28;28;0;0;
