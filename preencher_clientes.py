@@ -1,4 +1,4 @@
-"""Preenche nome completo e código do cliente na listagem de notas.
+"""Preenche nome completo e Cód Domínio do cliente na listagem de notas.
 
 Uso: python3 preencher_clientes.py clientes-cli.csv clientes-nota.csv saida.csv
 
@@ -51,9 +51,9 @@ def main(cli_path, nota_path, out_path):
         if len(opts) != 1 or opts[0][0] in mapa:
             problemas.append(nome)
             continue
-        mapa[opts[0][0]] = (nome if cod else "", cod)
+        mapa[opts[0][0]] = (nome if cod else "", c[2])
 
-    header[1], header[2] = "Cliente completo", "Cód"
+    header[1], header[2] = "Cliente completo", "Cód Domínio"
     with open(out_path, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f, delimiter=";", lineterminator="\r\n")
         w.writerow(header)
@@ -62,10 +62,10 @@ def main(cli_path, nota_path, out_path):
             r[1], r[2] = nome, cod
             w.writerow(r)
 
-    sem_cod = sorted({k for k, v in mapa.items() if not v[1]})
+    sem_cod = sorted({k for k, v in mapa.items() if not v[0]})
     nao_achou = sorted(set(tot) - set(mapa))
-    print(f"clientes na listagem: {len(tot)} | com código: {len(tot) - len(sem_cod) - len(nao_achou)}")
-    print(f"sem código no cadastro ({len(sem_cod)}): {sem_cod}")
+    print(f"clientes na listagem: {len(tot)} | com nome completo: {len(tot) - len(sem_cod) - len(nao_achou)}")
+    print(f"sem nome completo no cadastro ({len(sem_cod)}): {sem_cod}")
     print(f"sem vínculo ({len(nao_achou)}): {nao_achou}")
     print(f"linhas do cadastro não vinculadas: {problemas}")
 
