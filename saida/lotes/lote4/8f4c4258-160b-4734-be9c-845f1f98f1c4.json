@@ -1,0 +1,217 @@
+{
+  "id": "8f4c4258-160b-4734-be9c-845f1f98f1c4",
+  "numero": "277",
+  "cnpj": "57183803000146",
+  "nome": "B3N LTDA",
+  "contasBancarias": [
+    {
+      "id": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "itau",
+      "bancoNome": "Itaú",
+      "contaBanco": "97703-8",
+      "contaSistema": "11"
+    }
+  ],
+  "regras": [
+    {
+      "id": "id-mumy7sne-j9brfc87",
+      "ativo": true,
+      "historico": "REND PAGO APLIC AUT MAIS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "2932",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-mitih8ah",
+      "ativo": true,
+      "historico": "NASCIMENTO E ROVER LTDA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "3019",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-83nwkdv9",
+      "ativo": true,
+      "historico": "NELSON ORCIOLI NETO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "402",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-kr3d2ccm",
+      "ativo": true,
+      "historico": "DIEGO FERNAN",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "3024",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-y2q6dm9u",
+      "ativo": true,
+      "historico": "TAR COBRANCA EXP",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-fg8f8gld",
+      "ativo": true,
+      "historico": "TAR/CUSTAS COBRANCA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-t6cib9vd",
+      "ativo": true,
+      "historico": "TAR PIX PGTO TRANSF",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-k7j0h1b6",
+      "ativo": true,
+      "historico": "PIX TRANSF NEOFIN",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "13",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-4et6vpfb",
+      "ativo": true,
+      "historico": "Kiwify",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "15",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-lhsyxwjb",
+      "ativo": true,
+      "historico": "IOF",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-x7t7y6yy",
+      "ativo": true,
+      "historico": "SYMPLA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "16",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-fdzdijfb",
+      "ativo": true,
+      "historico": "TAR PLANO ADAPT",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-3rwfj6s5",
+      "ativo": true,
+      "historico": "TAR PIX",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-s5ktsxrs",
+      "ativo": true,
+      "historico": "JUROS LIMITE DA CONTA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-gtgefg6b",
+      "ativo": true,
+      "historico": "FERNANDO AUGUSTO MATOS DA COST",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "3098",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-pswa6eon",
+      "ativo": true,
+      "historico": "BLUME OPERACOES DE VOZ",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2759",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-2m83uf5t",
+      "ativo": true,
+      "historico": "PIX RECEBIDO B3N",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "12",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7snf-vh5mxctt",
+      "ativo": true,
+      "historico": "NON IMPORTACAO E DISTRIBUICAO LTDA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "604",
+      "contaId": "4babcdac-ef50-4595-8f0c-fd8f0b45a756",
+      "valor": null
+    }
+  ],
+  "lancamentos": []
+}

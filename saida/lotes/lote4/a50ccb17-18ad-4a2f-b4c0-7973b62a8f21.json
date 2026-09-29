@@ -1,0 +1,387 @@
+{
+  "id": "a50ccb17-18ad-4a2f-b4c0-7973b62a8f21",
+  "numero": "137",
+  "cnpj": "13601956000190",
+  "nome": "PURO SABOR DISTRIBUIDORA DE ALIMENTOS LONDRINA LTDA",
+  "contasBancarias": [
+    {
+      "id": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "sicoob",
+      "bancoNome": "Sicoob",
+      "contaBanco": "128512-2",
+      "contaSistema": "14"
+    },
+    {
+      "id": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "caixa",
+      "bancoNome": "Caixa Econômica Federal",
+      "contaBanco": "000579164687-5",
+      "contaSistema": "11"
+    },
+    {
+      "id": "0a10b954-e0b7-46e5-b367-90c8987f6a10",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "caixa",
+      "bancoNome": "Caixa Econômica Federal",
+      "contaBanco": "000579164687-5",
+      "contaSistema": "13"
+    }
+  ],
+  "regras": [
+    {
+      "id": "id-mumy7smu-raa3uk6i",
+      "ativo": true,
+      "historico": "CRÉD.LIQUIDAÇÃO COBRANÇA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-do6yx26b",
+      "ativo": true,
+      "historico": "TARIFA COBRANÇA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-tg0opeqb",
+      "ativo": true,
+      "historico": "DÉBITO PACOTE SERVIÇOS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-ugnxv8qj",
+      "ativo": true,
+      "historico": "ROSELENE SIQUEIRA DE ASSIS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "403",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-mpnjp7xc",
+      "ativo": true,
+      "historico": "ADM CONSOR DÉB.CONV.DEMAIS EMPRESAS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "882",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-3ycza8tu",
+      "ativo": true,
+      "historico": "ROSELENE SIQUEIRA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "403",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-rjsog0d0",
+      "ativo": true,
+      "historico": "PIX RECEBIDO - OUTRA IF",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-alitn06s",
+      "ativo": true,
+      "historico": "Pagamento salarial",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "1302",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-fwowk7lt",
+      "ativo": true,
+      "historico": "DÉB.CONV.TELECOMUNICAÇÕES",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2703",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-zphe7xsy",
+      "ativo": true,
+      "historico": "Adiantando salarial",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "201",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-b4luhafk",
+      "ativo": true,
+      "historico": "04.368.898 0001-06",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2702",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-fe9d3q5b",
+      "ativo": true,
+      "historico": "02.421.421 0001-11",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2703",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-mdhimawa",
+      "ativo": true,
+      "historico": "41 - 7 APLICAÇÃO RDC",
+      "historicoPadrao": "41 - 7 APLICAÇÃO RDC",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "51",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-2d2gg8az",
+      "ativo": true,
+      "historico": "27918163 DÉB.TIT.COMPE EFETIVADO",
+      "historicoPadrao": "27918163 DÉB.TIT.COMPE EFETIVADO",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "3089",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-iot67z4o",
+      "ativo": true,
+      "historico": "Pix 76.416.890 0001-89 2011 Imposto Anual IPVA Cota Unica ou em Cotas",
+      "historicoPadrao": "Pix 76.416.890 0001-89 2011 Imposto Anual IPVA Cota Unica ou em Cotas",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2823",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-w48oepzq",
+      "ativo": true,
+      "historico": "RESGATE RDC",
+      "historicoPadrao": "RESGATE RDC",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "51",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-x7ktxqml",
+      "ativo": true,
+      "historico": "Pix PIX RECEBIDO - OUTRA IF",
+      "historicoPadrao": "Pix PIX RECEBIDO - OUTRA IF",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "c4bff3d9-df39-4fd4-bc10-5700a9bd66c3",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smu-d36d2g5w",
+      "ativo": true,
+      "historico": "TAR PIX",
+      "historicoPadrao": "TAR PIX",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-mviipsqq",
+      "ativo": true,
+      "historico": "PAG AGUA",
+      "historicoPadrao": "PAG AGUA",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2701",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-t6yl4tsw",
+      "ativo": true,
+      "historico": "202501 MENSALIDADE CESTA SERVICO",
+      "historicoPadrao": "202501 MENSALIDADE CESTA SERVICO",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-b0ncrxes",
+      "ativo": true,
+      "historico": "AGUA IBC",
+      "historicoPadrao": "AGUA IBC",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2701",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-2ed9isla",
+      "ativo": true,
+      "historico": "RECEBIMENTO TED",
+      "historicoPadrao": "RECEBIMENTO TED",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-qx22nwi9",
+      "ativo": true,
+      "historico": "DEPOSITO DINH LOTERICO",
+      "historicoPadrao": "DEPOSITO DINH LOTERICO",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-xi3wqote",
+      "ativo": true,
+      "historico": "MENSALIDADE CESTA SERVICO",
+      "historicoPadrao": "MENSALIDADE CESTA SERVICO",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-f9azzow1",
+      "ativo": true,
+      "historico": "PAGAMENTO TELEFONE IBC",
+      "historicoPadrao": "PAGAMENTO TELEFONE IBC",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2703",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-quemtwlv",
+      "ativo": true,
+      "historico": "DEB PIX CHAVE",
+      "historicoPadrao": "DEB PIX CHAVE",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "1004",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-crlb14ac",
+      "ativo": true,
+      "historico": "PAG BOLETO IBC",
+      "historicoPadrao": "PAG BOLETO IBC",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "1004",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-j9emg7tu",
+      "ativo": true,
+      "historico": "PIX ENVIADO",
+      "historicoPadrao": "PIX ENVIADO",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "1004",
+      "contaId": "fc012f43-42bb-478c-a164-1dbc86fb50b0",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-mefmuzpq",
+      "ativo": true,
+      "historico": "EXPRESSO SAO MIGUEL S A 00.428.307/0001-98 -",
+      "historicoPadrao": "EXPRESSO SAO MIGUEL S A 00.428.307/0001-98 -",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "3185",
+      "contaId": "0a10b954-e0b7-46e5-b367-90c8987f6a10",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-0souu1j4",
+      "ativo": true,
+      "historico": "COPEL",
+      "historicoPadrao": "COPEL",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2702",
+      "contaId": "0a10b954-e0b7-46e5-b367-90c8987f6a10",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-zbyxx6mu",
+      "ativo": true,
+      "historico": "SANEPAR",
+      "historicoPadrao": "SANEPAR",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2701",
+      "contaId": "0a10b954-e0b7-46e5-b367-90c8987f6a10",
+      "valor": null
+    },
+    {
+      "id": "id-mumy7smv-mks5ahwb",
+      "ativo": true,
+      "historico": "CEF MATRIZ",
+      "historicoPadrao": "CEF MATRIZ",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "1322",
+      "contaId": "0a10b954-e0b7-46e5-b367-90c8987f6a10",
+      "valor": null
+    }
+  ],
+  "lancamentos": []
+}
