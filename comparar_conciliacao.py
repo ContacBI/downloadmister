@@ -1,6 +1,10 @@
 """Compara o balancete (Domínio) com o relatório de clientes, por Cód Domínio.
 
 Uso: python3 comparar_conciliacao.py Balancete.xlsx clientes-AAAA-MM-cli.csv saida.xlsx
+         [--anterior BalanceteAnterior.xlsx] [--apontamentos planilha-anterior.xlsx]
+
+--anterior      balancete da rodada anterior: mostra o que mudou e o que foi corrigido
+--apontamentos  planilha da rodada anterior com as anotações na coluna Observação (aba "Todos os clientes")
 
 - Balancete: salve o .xls do Domínio como .xlsx (Excel: Salvar como). Vale a conta 1.1.20.100.* (clientes);
   a coluna "Código" do balancete é o Cód Domínio.
@@ -87,7 +91,51 @@ def montar(B, R):
     return linhas
 
 
-def escrever(linhas, periodo, saida):
+AUTO = ("Possível lançamento em conta trocada", "Entrada e saída iguais")
+
+
+def ler_apontamentos(planilha):
+    """Anotações escritas à mão na coluna Observação da aba 'Todos os clientes' (Cód Domínio -> texto)."""
+    ws = openpyxl.load_workbook(planilha)["Todos os clientes"]
+    ap = {}
+    for r in ws.iter_rows(min_row=5, values_only=True):
+        if r[0] and r[16] and not str(r[16]).startswith(AUTO):
+            ap[str(r[0])] = str(r[16]).strip()
+    return ap
+
+
+def classificar(novas, antigas, apont):
+    """Status do acerto de cada cliente, comparando com a rodada anterior."""
+    ant = {l["cod"]: l for l in antigas} if antigas else {}
+    for l in novas:
+        a = ant.get(l["cod"])
+        l["apont"] = apont.get(l["cod"], "")
+        l["mudou"] = ""
+        if a:
+            campos = ("ant_b", "ent_b", "sai_b", "fin_b")
+            l["mudou"] = "Sim" if any(abs((l[c] or 0) - (a[c] or 0)) > TOL for c in campos) or (a["origem"] != l["origem"]) else "Não"
+        marcado = l["apont"].strip().lower().startswith("corrigido")
+        havia = bool(a and a["dif"])
+        if not l["dif"]:
+            l["status2"] = "Corrigido" if (havia or marcado) else "Confere"
+            l["grupo"] = "corrigido" if l["status2"] == "Corrigido" else "confere"
+        elif abs(l["d_fin"]) > TOL:
+            l["status2"] = "Pendente: saldo final diferente" + (" (marcado como corrigido, mas ainda diverge)" if marcado else "")
+            l["grupo"] = "pendente"
+        elif abs(l["d_ent"] - l["d_sai"]) <= TOL and abs(l["d_ent"]) > TOL:
+            if l["apont"] and not marcado:
+                l["status2"] = "Explicado: entrada = saída, sem efeito no saldo"
+                l["grupo"] = "explicado"
+            else:
+                l["status2"] = "Saldo final ok; sobra entrada = saída sem explicação" + (" (marcado como corrigido)" if marcado else "")
+                l["grupo"] = "pendente"
+        else:
+            l["status2"] = "Pendente: entradas/saídas diferentes"
+            l["grupo"] = "pendente"
+    return novas
+
+
+def escrever(linhas, periodo, saida, versao2=False, anterior=None):
     azul = PatternFill("solid", fgColor="1F3864"); zebra = PatternFill("solid", fgColor="F2F6FC")
     vermelho = PatternFill("solid", fgColor="FCE4E4"); verde = PatternFill("solid", fgColor="E2F0D9")
     fino = Side(style="thin", color="D9D9D9"); borda = Border(left=fino, right=fino, top=fino, bottom=fino)
@@ -114,6 +162,18 @@ def escrever(linhas, periodo, saida):
     ws.append(["Só no balancete (com diferença)", sum(1 for l in linhas if l["dif"] and l["origem"] == "só no balancete")])
     ws.append(["Só no relatório (com diferença)", sum(1 for l in linhas if l["dif"] and l["origem"] == "só no relatório")])
     ws.append(["Com diferença no saldo final", sum(1 for l in linhas if abs(l["d_fin"]) > TOL)])
+    if versao2:
+        ws.append([])
+        ws.append(["Situação dos clientes (esta rodada)", "Qtd."])
+        for rot, g in (("Corrigidos", "corrigido"), ("Explicados (sem efeito no saldo)", "explicado"), ("Pendentes (não corrigidos)", "pendente"), ("Conferem, sem divergência", "confere")):
+            ws.append([rot, sum(1 for l in linhas if l["grupo"] == g)])
+        if anterior:
+            ws.append([])
+            ws.append(["Balancete anterior (para comparar)", "Saldo final", "Dif. p/ relatório"])
+            ws.append(["Balancete da rodada anterior", anterior["fin_b"], r2(anterior["fin_b"] - anterior["fin_r"])])
+            for c in ws[ws.max_row][1:]: c.number_format = money
+            ws.append(["Balancete novo", tot("fin_b"), r2(tot("fin_b") - tot("fin_r"))])
+            for c in ws[ws.max_row][1:]: c.number_format = money
     ws.column_dimensions["A"].width = 38
     ws.page_setup.orientation = "landscape"; ws.page_setup.fitToWidth = 1; ws.page_setup.fitToHeight = 0
     ws.sheet_properties.pageSetUpPr = openpyxl.worksheet.properties.PageSetupProperties(fitToPage=True)
@@ -125,6 +185,9 @@ def escrever(linhas, periodo, saida):
             ("Saídas relatório", "sai_r", 16, money), ("Saídas balancete", "sai_b", 16, money), ("Dif. saídas", "d_sai", 14, money),
             ("Saldo final relatório", "fin_r", 17, money), ("Saldo final balancete", "fin_b", 17, money), ("Dif. saldo final", "d_fin", 15, money),
             ("Situação", "situacao", 30, None), ("Observação", "obs", 70, None)]
+    if versao2:
+        cols = [cols[0], cols[1], ("Status do acerto", "status2", 46, None), ("Apontamento", "apont", 58, None),
+                ("Mudou no balancete novo?", "mudou", 13, None)] + cols[3:15] + [cols[2], ("Observação automática", "obs", 60, None)]
 
     def aba(titulo, subset, subtitulo):
         w = wb.create_sheet(titulo); w.sheet_view.showGridLines = False
@@ -142,12 +205,26 @@ def escrever(linhas, periodo, saida):
                 if c[1] in ("d_ant", "d_ent", "d_sai", "d_fin") and l[c[1]] is not None and abs(l[c[1]]) > TOL:
                     cell.fill = vermelho; cell.font = Font(bold=True, color="C00000")
                 if c[1] == "situacao": cell.fill = verde if l["situacao"] == "Confere" else vermelho
+                if c[1] == "status2":
+                    cell.fill = verde if l["grupo"] in ("corrigido", "confere") else (PatternFill("solid", fgColor="FFF2CC") if l["grupo"] == "explicado" else vermelho)
+                    cell.font = Font(bold=True, color="375623" if l["grupo"] in ("corrigido", "confere") else ("7F6000" if l["grupo"] == "explicado" else "C00000"))
         for j, c in enumerate(cols): w.column_dimensions[get_column_letter(j + 1)].width = c[2]
-        w.freeze_panes = "D5"; w.auto_filter.ref = f"A4:{get_column_letter(len(cols))}{4 + max(len(subset), 1)}"
+        w.freeze_panes = "F5" if versao2 else "D5"; w.auto_filter.ref = f"A4:{get_column_letter(len(cols))}{4 + max(len(subset), 1)}"
         w.page_setup.orientation = "landscape"; w.page_setup.fitToWidth = 1; w.page_setup.fitToHeight = 0
         w.sheet_properties.pageSetUpPr = openpyxl.worksheet.properties.PageSetupProperties(fitToPage=True)
         w.print_title_rows = "4:4"
 
+    if versao2:
+        pend = sorted([l for l in linhas if l["grupo"] == "pendente"], key=lambda l: (-abs(l["d_fin"]), -abs(l["d_ent"])))
+        aba("Pendências", pend, f"{len(pend)} clientes ainda com diferença que não foi corrigida nem explicada (saldo final diferente ou sobra sem explicação)")
+        exp = [l for l in linhas if l["grupo"] == "explicado"]
+        aba("Explicados (sem efeito)", exp, f"{len(exp)} clientes com entrada = saída só de um lado, com o seu apontamento; não mudam o saldo final")
+        cor = [l for l in linhas if l["grupo"] == "corrigido"]
+        aba("Corrigidos", cor, f"{len(cor)} clientes que divergiam e agora conferem no balancete novo")
+        aba("Todos os clientes", linhas, f"{len(linhas)} códigos comparados")
+        wb.move_sheet("Resumo", offset=-wb.index(wb["Resumo"]))
+        wb.save(saida)
+        return
     fin = [l for l in linhas if abs(l["d_fin"]) > TOL]
     aba("Saldo final diferente", sorted(fin, key=lambda l: -abs(l["d_fin"])), f"{len(fin)} clientes com saldo final diferente (soma das diferenças: {r2(sum(l['d_fin'] for l in fin)):,.2f})")
     dif = [l for l in linhas if l["dif"]]
@@ -159,7 +236,27 @@ def escrever(linhas, periodo, saida):
 
 
 if __name__ == "__main__":
-    B, R, periodo = carregar(sys.argv[1], sys.argv[2])
+    args = [x for x in sys.argv[1:]]
+    opt = {}
+    for chave in ("--anterior", "--apontamentos"):
+        if chave in args:
+            i = args.index(chave)
+            opt[chave] = args[i + 1]
+            del args[i:i + 2]
+    B, R, periodo = carregar(args[0], args[1])
     L = montar(B, R)
-    escrever(L, periodo, sys.argv[3])
-    print(f"{len(L)} códigos | divergem: {sum(1 for l in L if l['dif'])} | saldo final diferente: {sum(1 for l in L if abs(l['d_fin']) > TOL)}")
+    if opt:
+        antigas = None
+        resumo_ant = None
+        if "--anterior" in opt:
+            Ba, Ra, _ = carregar(opt["--anterior"], args[1])
+            antigas = montar(Ba, Ra)
+            resumo_ant = {"fin_b": r2(sum(v["atual"] for v in Ba.values())), "fin_r": r2(sum(v["fin"] for v in Ra.values()))}
+        ap = ler_apontamentos(opt["--apontamentos"]) if "--apontamentos" in opt else {}
+        classificar(L, antigas, ap)
+        escrever(L, periodo, args[2], versao2=True, anterior=resumo_ant)
+        g = collections.Counter(l["grupo"] for l in L)
+        print(f"{len(L)} códigos | corrigidos {g['corrigido']} | explicados {g['explicado']} | pendentes {g['pendente']} | conferem {g['confere']}")
+    else:
+        escrever(L, periodo, args[2])
+        print(f"{len(L)} códigos | divergem: {sum(1 for l in L if l['dif'])} | saldo final diferente: {sum(1 for l in L if abs(l['d_fin']) > TOL)}")
