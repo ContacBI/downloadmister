@@ -4,6 +4,34 @@
      Movimento a Receber do mês. Lê o que já existe: extratos por conta+mês (/api/conciliacao-micromedical/...) e relatórios
      (/api/micromedical-relatorios/...). Nada é gravado aqui. -->
 <meta charset="utf-8">
+<script>
+/* DIAGNÓSTICO: mostra na tela qualquer erro ao abrir a página e quais funções dos arquivos de apoio (../_shared) estão faltando. Pode remover depois. */
+(function () {
+  var msgs = [], API = {"HubFilial": ["carregar"], "HubColunasFixas": ["carregar", "mapa", "processar", "padrao"], "HubColunas": ["abrir"], "HubBarraH": ["ativar"], "HubBanco": ["usar", "celula"], "HubAlertas": ["registrar", "iniciar", "atualizar"], "ExcelBonito": ["baixar"], "ClientesRecon": ["injetarColunaDominio", "nfsExatas", "mapaCodigoPorRelatorio", "extrairRelatorio"], "TransferenciasLanc": ["detectar", "aplicar"], "AplicacoesLanc": ["vincularConciliacao", "salvarVinculos", "ouvir", "carregar"]};
+  function mostrar() {
+    var b = document.body || document.documentElement, d = document.getElementById("__diag");
+    if (!d) { d = document.createElement("pre"); d.id = "__diag"; b.appendChild(d); }
+    d.style.cssText = "position:fixed;z-index:99999;left:12px;right:12px;top:12px;max-height:90vh;overflow:auto;background:#3b0d0d;color:#ffd6d6;border:2px solid #ff5a5a;border-radius:8px;padding:12px;font:12px/1.5 monospace;white-space:pre-wrap";
+    d.textContent = "DIAGNÓSTICO (tire um print desta caixa)\n\n" + msgs.join("\n\n");
+  }
+  window.addEventListener("error", function (e) {
+    var t = e.target;
+    if (t && t !== window && (t.src || t.href)) { if (!/fonts\.googleapis/.test(t.src || t.href)) msgs.push("NÃO CARREGOU O ARQUIVO: " + (t.src || t.href)); }
+    else msgs.push("ERRO NO SCRIPT: " + e.message + "  (linha " + e.lineno + ")");
+    mostrar();
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) { msgs.push("ERRO (promessa): " + ((e.reason && e.reason.message) || e.reason)); mostrar(); });
+  document.addEventListener("DOMContentLoaded", function () {
+    var falta = [];
+    Object.keys(API).forEach(function (obj) {
+      if (typeof window[obj] === "undefined") { falta.push(obj + "  (o arquivo de apoio não definiu este objeto)"); return; }
+      API[obj].forEach(function (fn) { if (typeof window[obj][fn] !== "function") falta.push(obj + "." + fn + "()"); });
+    });
+    if (falta.length) msgs.push("FALTAM ESTAS FUNÇÕES NOS ARQUIVOS DE APOIO (../_shared):\n  - " + falta.join("\n  - "));
+    if (msgs.length) mostrar();
+  });
+})();
+</script>
 <title>Conciliação — Micromedical</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">

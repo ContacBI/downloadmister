@@ -4,6 +4,34 @@
      Movimento a Receber do mês. Lê o que já existe: extratos por conta+mês (/api/conciliacao-micromedical/...) e relatórios
      (/api/micromedical-relatorios/...). Nada é gravado aqui. -->
 <meta charset="utf-8">
+<script>
+/* DIAGNÓSTICO: mostra na tela qualquer erro ao abrir a página e quais funções dos arquivos de apoio (../_shared) estão faltando. Pode remover depois. */
+(function () {
+  var msgs = [], API = {"HubFilial": ["carregar"], "HubColunasFixas": ["carregar", "mapa", "processar", "padrao"], "HubColunas": ["abrir"], "HubBarraH": ["ativar"], "HubBanco": ["usar", "celula"], "HubAlertas": ["registrar", "iniciar", "atualizar"], "ExcelBonito": ["baixar"], "ClientesRecon": ["injetarColunaDominio", "nfsExatas", "mapaCodigoPorRelatorio", "extrairRelatorio"], "TransferenciasLanc": ["detectar", "aplicar"], "AplicacoesLanc": ["vincularConciliacao", "salvarVinculos", "ouvir", "carregar"]};
+  function mostrar() {
+    var b = document.body || document.documentElement, d = document.getElementById("__diag");
+    if (!d) { d = document.createElement("pre"); d.id = "__diag"; b.appendChild(d); }
+    d.style.cssText = "position:fixed;z-index:99999;left:12px;right:12px;top:12px;max-height:90vh;overflow:auto;background:#3b0d0d;color:#ffd6d6;border:2px solid #ff5a5a;border-radius:8px;padding:12px;font:12px/1.5 monospace;white-space:pre-wrap";
+    d.textContent = "DIAGNÓSTICO (tire um print desta caixa)\n\n" + msgs.join("\n\n");
+  }
+  window.addEventListener("error", function (e) {
+    var t = e.target;
+    if (t && t !== window && (t.src || t.href)) { if (!/fonts\.googleapis/.test(t.src || t.href)) msgs.push("NÃO CARREGOU O ARQUIVO: " + (t.src || t.href)); }
+    else msgs.push("ERRO NO SCRIPT: " + e.message + "  (linha " + e.lineno + ")");
+    mostrar();
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) { msgs.push("ERRO (promessa): " + ((e.reason && e.reason.message) || e.reason)); mostrar(); });
+  document.addEventListener("DOMContentLoaded", function () {
+    var falta = [];
+    Object.keys(API).forEach(function (obj) {
+      if (typeof window[obj] === "undefined") { falta.push(obj + "  (o arquivo de apoio não definiu este objeto)"); return; }
+      API[obj].forEach(function (fn) { if (typeof window[obj][fn] !== "function") falta.push(obj + "." + fn + "()"); });
+    });
+    if (falta.length) msgs.push("FALTAM ESTAS FUNÇÕES NOS ARQUIVOS DE APOIO (../_shared):\n  - " + falta.join("\n  - "));
+    if (msgs.length) mostrar();
+  });
+})();
+</script>
 <title>Conciliação — Micromedical</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1829,47 +1857,20 @@ function appMain() {
   }
 
   /* ---- Excel da aba aberta ---- */
-  // Linhas do Excel da lista, iguais às da tela (pintarLista): uma soma (1E x NR) abre uma linha por lançamento do
-  // relatório (1.01, 1.02...), como subLinhasSoma, e os ajustes de juros/desconto vêm logo abaixo da linha a que
-  // pertencem, como linhaAjusteJD. Antes o Excel gerava 1 linha só por soma ("RECEBIMENTO - SOMA DE 4 LANÇAMENTOS").
-  function linhasExcelLista(rows) {
-    var out = [], temAjuste = false;
-    function ajustes(x, w, tipo, textoHist) {
-      ajusteJurosDescontoDeRel(w, tipo).forEach(function (a) {
-        var hist = ROTULO_AJUSTE_JD[tipo][a.tipo] + " - " + textoHist; temAjuste = true;
-        out.push({ seq: "", data: x.l.data, banco: "", d: a.d || "", c: a.c || "", hist: hist, aj: hist, valor: a.valor, vinc: a.tipo === "juros" ? "Juros" : "Desconto" });
-      });
-    }
-    rows.forEach(function (x, i) {
-      var dc = valoresDC(x), sm = SOMA_EXT[x.l.id];
-      if (sm) {
-        sm.itens.forEach(function (it, k) {
-          var ajI = autoHistRel(it, sm.tipo);
-          out.push({ seq: (i + 1) + "." + (k < 9 ? "0" : "") + (k + 1), data: x.l.data, banco: x.c.apelido, d: dc.d, c: dc.c, hist: x.l.descricao, aj: ajI,
-            valor: sm.tipo === "pagar" ? -it.c / 100 : it.c / 100, vinc: "1E x " + sm.itens.length + "R" });
-          ajustes(x, it, sm.tipo, ajI);
-        });
-        return;
-      }
-      var mt = MATCH_EXT[x.l.id], mu = MULTI_EXT[x.l.id], aj = ajEfetivo(x.l);
-      out.push({ seq: String(i + 1), data: x.l.data, banco: x.c.apelido, d: dc.d, c: dc.c, hist: x.l.descricao, aj: aj, valor: x.l.valor, vinc: vinculoTexto(x) });
-      if (mt) ajustes(x, mt.rel, mt.tipo, aj);
-      else if (mu && mu.k === 1) ajustes(x, mu.rel, mu.tipo, aj);
-    });
-    return { linhas: out, temAjuste: temAjuste };
-  }
   function baixarExcelAba() {
     if (typeof ExcelBonito === "undefined") { showToast("Gerador de Excel não carregou."); return; }
     var titulo = "Conciliação " + rotuloMes(MES), abas = [];
     if (TAB === "extratos" || TAB === "matches") {
       var mat = TAB === "matches", rows = filtrarLista(mat);
       if (!rows.length) { showToast("Nada pra exportar."); return; }
-      var xl = linhasExcelLista(rows);
-      var cols = [{ titulo: "#", chave: "seq", largura: 8 }, { titulo: "Data", chave: "data", tipo: "data" }, { titulo: "Banco", chave: "banco", largura: 28 }, { titulo: "D", chave: "d", largura: 14 }, { titulo: "C", chave: "c", largura: 14 }, { titulo: "Histórico", chave: "hist", largura: 60 }];
+      var cols = [{ titulo: "Data", chave: "data", tipo: "data" }, { titulo: "Banco", chave: "banco", largura: 28 }, { titulo: "D", chave: "d", largura: 14 }, { titulo: "C", chave: "c", largura: 14 }, { titulo: "Histórico", chave: "hist", largura: 60 }];
       if (mat) cols.push({ titulo: "Histórico ajustado", chave: "aj", largura: 60 });
-      // com linhas de juros/desconto o total do Valor somaria o ajuste junto: nesse caso não totaliza
-      cols.push({ titulo: "Valor", chave: "valor", tipo: "moeda", total: !xl.temAjuste }, { titulo: "Vínculo", chave: "vinc", largura: 20 });
-      abas.push({ nome: mat ? "Matches" : "Extratos", colunas: cols, linhas: xl.linhas });
+      cols.push({ titulo: "Valor", chave: "valor", tipo: "moeda", total: true }, { titulo: "Vínculo", chave: "vinc", largura: 20 });
+      abas.push({ nome: mat ? "Matches" : "Extratos", colunas: cols,
+        linhas: rows.map(function (x) {
+          var dc = valoresDC(x);
+          return { data: x.l.data, banco: x.c.apelido, d: dc.d, c: dc.c, hist: x.l.descricao, aj: ajEfetivo(x.l), valor: x.l.valor, vinc: vinculoTexto(x) };
+        }) });
     } else {
       var aba = abaAtual(TAB); if (!aba) { showToast("Nada pra exportar."); return; }
       var linhas = linhasRelatorio(TAB, aba), cfg = configColunas(TAB, aba), vis = cfg.ordem.filter(function (c) { return cfg.visiveis.indexOf(c) !== -1; });
@@ -1895,9 +1896,7 @@ function appMain() {
   }
   carregarTransferencias().then(function () { if (MES && Object.keys(DOCS).length) { MATCH_OK = false; renderMes(); } });
   carregarAplicacoes().catch(function () { /* sem aplicações: segue normal */ });
-  // protegido: se o arquivo de apoio aplicacoes-lanc.js do servidor for de outra versão e não tiver "ouvir", a página abre mesmo assim (só não atualiza sozinha ao salvar em Conferência de Aplicações)
-  if (typeof AplicacoesLanc.ouvir === "function") AplicacoesLanc.ouvir(empresaId, function () { carregarAplicacoes().catch(function () { /* mantém o que já tinha */ }); });
-  else if (window.console) console.warn("aplicacoes-lanc.js não tem a função ouvir(): a Conciliação não vai atualizar sozinha ao salvar em Conferência de Aplicações."); // salvou algo em Conferência de Aplicações -> atualiza na hora
+  AplicacoesLanc.ouvir(empresaId, function () { carregarAplicacoes().catch(function () { /* mantém o que já tinha */ }); }); // salvou algo em Conferência de Aplicações -> atualiza na hora
   carregarBase().then(function () { setStatus("ok", "Pronto."); if (MES) abrirMes(MES); else renderEscolherMes(); if (window.HubAlertas) HubAlertas.iniciar({ onContasAlteradas: function () { carregarBase().then(function () { if (MES) abrirMes(MES); }); } }); })
     .catch(function (err) { setStatus("warn", "Erro ao carregar."); $("panelMain").innerHTML = '<div class="fn-vazio">Erro: ' + esc(err.message) + "</div>"; });
 }

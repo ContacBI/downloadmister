@@ -1,3 +1,5 @@
-index.html            versão corrigida (Excel igual à tela)
-index.original.html   arquivo como veio
-alteracao-excel.diff  a mudança, linha a linha
+index.html                       corrigido: Excel igual à tela + proteção para o arquivo de apoio sem ouvir()
+index.diagnostico.html           o mesmo + caixa vermelha que mostra erros e funções que faltam nos arquivos de apoio
+index.original.html              arquivo como veio
+index.original.diagnostico.html  o original + a caixa de diagnóstico
+alteracao-excel.diff             a mudança, linha a linha

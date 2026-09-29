@@ -1,5 +1,5 @@
 --- index.original.html	2026-09-29 18:49:16.377696183 +0000
-+++ index.html	2026-09-29 18:49:16.419726528 +0000
++++ index.html	2026-09-29 19:16:22.275998659 +0000
 @@ -1829,20 +1829,47 @@
    }
  
@@ -55,3 +55,14 @@
      } else {
        var aba = abaAtual(TAB); if (!aba) { showToast("Nada pra exportar."); return; }
        var linhas = linhasRelatorio(TAB, aba), cfg = configColunas(TAB, aba), vis = cfg.ordem.filter(function (c) { return cfg.visiveis.indexOf(c) !== -1; });
+@@ -1868,7 +1895,9 @@
+   }
+   carregarTransferencias().then(function () { if (MES && Object.keys(DOCS).length) { MATCH_OK = false; renderMes(); } });
+   carregarAplicacoes().catch(function () { /* sem aplicações: segue normal */ });
+-  AplicacoesLanc.ouvir(empresaId, function () { carregarAplicacoes().catch(function () { /* mantém o que já tinha */ }); }); // salvou algo em Conferência de Aplicações -> atualiza na hora
++  // protegido: se o arquivo de apoio aplicacoes-lanc.js do servidor for de outra versão e não tiver "ouvir", a página abre mesmo assim (só não atualiza sozinha ao salvar em Conferência de Aplicações)
++  if (typeof AplicacoesLanc.ouvir === "function") AplicacoesLanc.ouvir(empresaId, function () { carregarAplicacoes().catch(function () { /* mantém o que já tinha */ }); });
++  else if (window.console) console.warn("aplicacoes-lanc.js não tem a função ouvir(): a Conciliação não vai atualizar sozinha ao salvar em Conferência de Aplicações."); // salvou algo em Conferência de Aplicações -> atualiza na hora
+   carregarBase().then(function () { setStatus("ok", "Pronto."); if (MES) abrirMes(MES); else renderEscolherMes(); if (window.HubAlertas) HubAlertas.iniciar({ onContasAlteradas: function () { carregarBase().then(function () { if (MES) abrirMes(MES); }); } }); })
+     .catch(function (err) { setStatus("warn", "Erro ao carregar."); $("panelMain").innerHTML = '<div class="fn-vazio">Erro: ' + esc(err.message) + "</div>"; });
+ }
