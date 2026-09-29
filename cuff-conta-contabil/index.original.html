@@ -1,0 +1,1717 @@
+<!-- Conciliação Bancária — Grupo Cuff (CJ / COOL / CUFF). Diferente do MIB/Concent: não
+     compara extrato x relatório contábil (o grupo não tem um relatório externo pra
+     confrontar) -- só espelha o extrato de "Caixas e Bancos" do Bling por conta+mês.
+     Cada empresa cadastra manualmente quais contas do Bling quer acompanhar (a conexão
+     Bling é única pro grupo inteiro, ver GET /cuff-bancaria/contas-bling-disponiveis),
+     com um apelido próprio. Ver server/src/config.ts (CUFF_BANCARIA_DIR) e
+     cuffBancariaTypes.ts pro modelo de dados completo. -->
+<meta charset="utf-8">
+<title>Conciliação Bancária — Cuff</title>
+<script src="../_shared/lancar-dominio.js"></script>
+<script src="../_shared/campos-ao-sair.js"></script>
+<script src="../_shared/comprovantes-vinculo.js"></script>
+<script>
+  (function () {
+    try {
+      var tema = localStorage.getItem("tema");
+      if (tema !== "light" && tema !== "dark") { tema = "dark"; localStorage.setItem("tema", tema); }
+      document.documentElement.setAttribute("data-theme", tema);
+    } catch (e) { /* sem acesso a localStorage -- ignora */ }
+  })();
+</script>
+<script>
+function appMain() {
+  "use strict";
+
+  var CSS_TEXT = `
+    :root {
+      --bg: #f4f6f9; --paper: #eef1f6; --surface: #ffffff; --ink: #17222f;
+      --muted: #4c5b6e; --faint: #8794a3; --hint: #848da0; --glow-brand: rgb(60 75 240 / 0.14); --glow-violet: rgb(139 92 246 / 0.13); --glow-success: rgb(18 148 107 / 0.1); --accent: #2563eb; --accent-ink: #ffffff;
+      --accent-soft: color-mix(in srgb, #2563eb 12%, #f4f6f9); --gold: #b9820f;
+      --gold-soft: color-mix(in srgb, #b9820f 14%, #f4f6f9); --border: #e3e8ef;
+      --border-strong: #cbd3df; --danger: #d8493a; --danger-soft: color-mix(in srgb, #d8493a 12%, #f4f6f9);
+      --ok: #1d9e75; --ok-soft: color-mix(in srgb, #1d9e75 12%, #f4f6f9); --warn: #b9820f;
+      --warn-soft: color-mix(in srgb, #b9820f 14%, #f4f6f9);
+      --shadow: 0 1px 2px rgb(0 0 0 / .04), 0 1px 3px rgb(0 0 0 / .06);
+      --radius: 12px; --focus: #2563eb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #14161c; --paper: #242832; --surface: #1c1f27; --ink: #eef0f4;
+        --muted: #9da5b5; --faint: #4a505f; --hint: #6b7285; --glow-brand: rgb(128 147 255 / 0.2); --glow-violet: rgb(167 139 250 / 0.18); --glow-success: rgb(60 196 150 / 0.14); --accent: #8093ff; --accent-ink: #ffffff;
+        --accent-soft: color-mix(in srgb, #8093ff 16%, #14161c); --gold: #d9a441;
+        --gold-soft: color-mix(in srgb, #d9a441 16%, #14161c); --border: #333844;
+        --border-strong: #454b59; --danger: #e2766a; --danger-soft: color-mix(in srgb, #e2766a 16%, #14161c);
+        --ok: #3cc496; --ok-soft: color-mix(in srgb, #3cc496 16%, #14161c); --warn: #d9a441;
+        --warn-soft: color-mix(in srgb, #d9a441 16%, #14161c);
+        --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 6px 20px rgb(0 0 0 / .35); --focus: #8093ff;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #14161c; --paper: #242832; --surface: #1c1f27; --ink: #eef0f4;
+      --muted: #9da5b5; --faint: #4a505f; --hint: #6b7285; --glow-brand: rgb(128 147 255 / 0.2); --glow-violet: rgb(167 139 250 / 0.18); --glow-success: rgb(60 196 150 / 0.14); --accent: #8093ff; --accent-ink: #ffffff;
+      --accent-soft: color-mix(in srgb, #8093ff 16%, #14161c); --gold: #d9a441;
+      --gold-soft: color-mix(in srgb, #d9a441 16%, #14161c); --border: #333844;
+      --border-strong: #454b59; --danger: #e2766a; --danger-soft: color-mix(in srgb, #e2766a 16%, #14161c);
+      --ok: #3cc496; --ok-soft: color-mix(in srgb, #3cc496 16%, #14161c); --warn: #d9a441;
+      --warn-soft: color-mix(in srgb, #d9a441 16%, #14161c);
+      --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 6px 20px rgb(0 0 0 / .35); --focus: #8093ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--ink); font-family: "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    ::selection { background: var(--accent-soft); }
+    *:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+    button { font-family: inherit; }
+    .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+    .voltar-hub { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; transition: color .12s ease; }
+    .voltar-hub:hover { color: var(--ink); }
+
+    .app-shell { display: flex; min-height: 100vh; align-items: stretch; }
+    .sidebar { width: 252px; flex: none; background: var(--paper); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 20px; padding: 18px 14px 14px; position: sticky; top: 0;
+      height: 100vh; overflow-y: auto; }
+    .sidebar-brand { display: flex; align-items: center; gap: 10px; }
+    .sidebar-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
+      display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
+    .sidebar-title { font-weight: 800; font-size: 14.5px; line-height: 1.25; letter-spacing: -.01em; }
+    .sidebar-title-sub { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 1px; }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+    .nav-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: .09em; color: var(--faint);
+      font-weight: 700; margin: 0 0 6px 4px; }
+    .nav-list { display: flex; flex-direction: column; gap: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px; color: var(--muted);
+      font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; background: transparent;
+      text-align: left; width: 100%; transition: background .12s ease, color .12s ease, border-color .12s ease; }
+    .nav-item:hover { background: var(--surface); color: var(--ink); }
+    .nav-item.active { background: var(--accent); color: var(--accent-ink); }
+    .nav-item .nav-item-icon { flex: none; width: 18px; text-align: center; font-size: 13px; }
+    .nav-item .nav-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-item-ghost { color: var(--faint); border: 1px dashed var(--border-strong); }
+    .nav-item-ghost:hover { color: var(--ink); border-color: var(--border-strong); background: var(--surface); }
+    .sidebar-status { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted);
+      padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+
+    .main-area { flex: 1; min-width: 0; background-color: var(--bg); background-image: radial-gradient(1200px circle at 12% -15%, var(--glow-brand), transparent 60%), radial-gradient(1000px circle at 90% 5%, var(--glow-violet), transparent 55%), radial-gradient(900px circle at 50% 110%, var(--glow-success), transparent 55%); background-repeat: no-repeat; background-attachment: fixed; }
+    /* Sem max-width -- ocupa a largura toda disponível (padrão do hub desde
+       17/09/2026: nunca sobrar vazio do lado, ver pedido do Izaias). */
+    .main-inner { padding: 24px clamp(18px, 3vw, 44px) 64px; display: flex; flex-direction: column; gap: 18px; }
+    .main-inner.full { max-width: none; }
+    .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .page-eyebrow { font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace; font-size: 10.5px;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin: 0 0 4px; }
+    .page-title { font-weight: 800; font-size: clamp(20px, 3vw, 26px); letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+    .kpi .kpi-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+    .kpi .kpi-value { font-size: 20px; font-weight: 800; margin-top: 4px; }
+    .kpi.warn .kpi-value { color: var(--warn); }
+    .kpi.ok .kpi-value { color: var(--ok); }
+    .kpi.danger .kpi-value { color: var(--danger); }
+    .attach-grid { display: flex; gap: 14px; flex-wrap: wrap; }
+    .attach-card { flex: 1; min-width: 260px; display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      border: 1.5px dashed var(--border-strong); border-radius: var(--radius); background: var(--paper);
+      transition: border-color .12s ease, background .12s ease; }
+    .attach-card.tem-arquivo { border-style: solid; border-color: var(--ok); background: var(--ok-soft); }
+    .attach-icon { font-size: 20px; flex: none; width: 40px; height: 40px; display: flex; align-items: center;
+      justify-content: center; background: var(--surface); border-radius: 9px; border: 1px solid var(--border); }
+    .attach-info { flex: 1; min-width: 0; }
+    .attach-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; margin-bottom: 3px; }
+    .attach-file { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .attach-file.vazio { color: var(--faint); font-weight: 400; font-style: italic; }
+
+    @media (max-width: 880px) {
+      .app-shell { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: static; flex-direction: column; }
+      .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 14px; }
+      .nav-list { flex-direction: row; flex-wrap: wrap; }
+      .nav-item .nav-item-label { max-width: 140px; }
+    }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px;
+      border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .card-head h2 { font-size: 14.5px; font-weight: 700; margin: 0; letter-spacing: -.005em; }
+    .card-body { padding: 16px; }
+    .hint-note { font-size: 11.5px; color: var(--hint); line-height: 1.4; }
+
+    .btn { appearance: none; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
+      border-radius: 7px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex;
+      align-items: center; gap: 6px; justify-content: center; transition: background .12s ease, border-color .12s ease, transform .05s ease; white-space: nowrap; }
+    .btn:hover { background: var(--paper); }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    .btn-primary:hover { filter: brightness(1.05); background: var(--accent); }
+    .btn-ghost { border-color: transparent; background: transparent; padding: 6px 8px; }
+    .btn-ghost:hover { background: var(--paper); }
+    .btn-danger { color: var(--danger); }
+    .btn-sm { padding: 5px 9px; font-size: 12px; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+    .plain-input, .plain-select, textarea.plain-input { padding: 7px 9px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--paper);
+      color: var(--ink); font-size: 13px; width: 100%; font-family: inherit; transition: border-color .1s ease, box-shadow .1s ease; }
+    .plain-input:focus, .plain-select:focus { border-color: var(--focus); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+    label.field-label { display: block; font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .05em; margin-bottom: 5px; }
+
+    .year-nav { display: flex; align-items: center; gap: 10px; }
+    .year-nav .year-label { font-weight: 700; font-size: 15px; min-width: 52px; text-align: center; }
+    .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 700px) { .month-grid { grid-template-columns: repeat(2, 1fr); } }
+    .month-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 14px; box-shadow: var(--shadow); transition: border-color .12s ease; }
+    .month-card.tem-dados { border-color: var(--ok); }
+    .month-card .mes-nome { font-weight: 700; font-size: 13.5px; }
+    .month-card .mes-status { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+    .month-card .mes-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); flex: none; }
+    .month-card .mes-status.ok .dot { background: var(--ok); }
+    .month-card .mes-actions { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .month-card .mes-actions-row { display: flex; gap: 6px; }
+    .month-card .mes-actions-row .btn { flex: 1; border-color: var(--border-strong); }
+    .mes-carregando { margin-top: 10px; display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--accent); font-weight: 600; }
+    .mes-carregando .spinner { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--accent); border-top-color: transparent;
+      animation: girar .7s linear infinite; flex: none; }
+    @keyframes girar { to { transform: rotate(360deg); } }
+
+    .totals-strip { display: flex; gap: 10px; flex-wrap: wrap; }
+    .total-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 9px 14px; min-width: 128px; box-shadow: var(--shadow); }
+    .total-card .lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+    .total-card .val { font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace; font-weight: 600; font-size: 17px; margin-top: 2px; }
+    .total-card.good .val { color: var(--ok); }
+    .total-card.bad .val { color: var(--danger); }
+    .total-card.grand { border-color: var(--accent); background: var(--accent-soft); }
+    .total-card.grand .val { color: var(--accent); }
+
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { position: sticky; top: 0; background: var(--paper); text-align: left; font-size: 10.5px; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th.num, td.num { text-align: right; }
+    tbody td { padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
+    tbody td.wrap { white-space: normal; }
+    tbody tr:hover td { background: var(--paper); }
+    .empty-state { padding: 36px 20px; text-align: center; color: var(--muted); font-size: 13px; }
+    .valor-entrada { color: var(--ok); }
+    .valor-saida { color: var(--danger); }
+
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-ok { background: var(--ok-soft); color: var(--ok); }
+    .badge-warn { background: var(--warn-soft); color: var(--warn); }
+    .badge-muted { background: var(--paper); color: var(--muted); border: 1px solid var(--border); }
+    .badge-accent { background: var(--accent-soft); color: var(--accent); }
+
+    .icon-btn { border: none; background: transparent; cursor: pointer; color: var(--faint); padding: 3px; border-radius: 5px; display: inline-flex; }
+    .icon-btn:hover { color: var(--accent); background: var(--accent-soft); }
+    .icon-btn:disabled { opacity: .3; cursor: default; }
+    .icon-btn:disabled:hover { color: var(--faint); background: transparent; }
+
+    .tab-bar { display: inline-flex; gap: 2px; padding: 2px; background: transparent; border: 1px solid var(--border); border-radius: 8px; width: fit-content; }
+    .tab-btn { border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 500; padding: 6px 12px;
+      border-radius: 6px; cursor: pointer; transition: all .12s ease; }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.active { background: var(--accent); color: #fff; box-shadow: none; }
+
+    .group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; }
+    .group-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; cursor: pointer; gap: 12px; }
+    .group-head:hover { background: var(--paper); }
+    .group-head .g-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .group-head .chevron { transition: transform .15s ease; color: var(--faint); flex: none; }
+    .group-card.open .chevron { transform: rotate(90deg); }
+    .group-head .g-title { font-weight: 700; font-size: 13.5px; }
+    .group-head .g-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+    .group-head .g-right { display: flex; align-items: center; gap: 10px; flex: none; }
+    .group-body { display: none; border-top: 1px solid var(--border); padding: 14px; flex-direction: column; gap: 12px; }
+    .group-card.open .group-body { display: flex; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgb(10 14 20 / .5); display: flex; align-items: center;
+      justify-content: center; z-index: 200; padding: 20px; }
+    .modal { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); max-width: 620px; width: 100%;
+      max-height: 88vh; display: flex; flex-direction: column; }
+    .modal.wide { max-width: 980px; }
+    .modal-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .modal-head h3 { margin: 0; font-size: 15px; font-weight: 700; }
+    .modal-body { padding: 16px 18px; overflow-y: auto; }
+    .modal-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .filtros-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .filtros-row .field { margin-bottom: 0; min-width: 140px; }
+    .filtros-row .field.grow { flex: 1; min-width: 200px; }
+    .check-inline { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+    .pill-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; }
+    .pill-group button { padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-strong);
+      background: var(--surface); color: var(--muted); font-size: 12.5px; font-weight: 700; cursor: pointer; text-align: center;
+      transition: all .12s ease; white-space: nowrap; }
+    .pill-group button:hover { color: var(--ink); border-color: var(--muted); }
+    .pill-group button.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    .form-section { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px 16px; background: var(--paper); }
+    .form-section + .form-section { margin-top: 14px; }
+    .form-section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--gold); margin: 0 0 12px; }
+    .btn-atalho-hist { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--surface);
+      color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; cursor: pointer; }
+    .btn-atalho-hist:hover { color: var(--ink); border-color: var(--muted); }
+    .selecao-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--radius);
+      background: var(--accent-soft); border: 1px solid var(--accent); margin-bottom: 10px; }
+    .selecao-bar .spacer { flex: 1; }
+    .link-btn { border: none; background: transparent; cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 6px; }
+    .link-btn:hover { background: var(--paper); }
+    .link-btn.linked { color: var(--ok); }
+    .link-btn.unlinked { color: var(--faint); }
+    .regra-row { display: grid; grid-template-columns: 1fr 110px 90px 1fr 130px auto auto; gap: 8px; align-items: center;
+      padding: 9px 4px; border-bottom: 1px solid var(--border); }
+    .regra-row:last-child { border-bottom: none; }
+    .regra-row .plain-input, .regra-row .plain-select { font-size: 12.5px; padding: 6px 8px; }
+    .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--ink);
+      color: var(--paper); padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow);
+      opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 300; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .loading-inline { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  `;
+
+  var BODY_SHELL = `
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <a class="voltar-hub" id="voltarHub" href="/grupos/grupo/grupo-cuff" style="margin-bottom:14px;display:inline-flex;">← Grupo Cuff</a>
+          <div class="sidebar-brand">
+            <div class="sidebar-icon">🏦</div>
+            <div>
+              <div class="sidebar-title">Conciliação Bancária</div>
+              <div class="sidebar-title-sub">Extrato do Bling</div>
+            </div>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <div>
+            <div class="nav-section-label">Empresa</div>
+            <select class="plain-select" id="selEmpresa"></select>
+          </div>
+          <div>
+            <div class="nav-section-label">Conta bancária</div>
+            <div class="nav-list" id="navContas"></div>
+            <button class="nav-item nav-item-ghost" id="btnGerenciarContas" style="margin-top:6px;"><span class="nav-item-icon">⚙</span><span class="nav-item-label">Gerenciar</span></button>
+          </div>
+          <div>
+            <div class="nav-section-label">Ferramentas</div>
+            <div class="nav-list" id="navFerramentas"></div>
+          </div>
+        </nav>
+        <div class="sidebar-status">
+          <span class="status-dot" id="statusDot"></span><span id="statusText">Carregando…</span>
+          <button class="btn btn-ghost btn-sm" id="btnTema" title="Alternar tema" style="margin-left:auto;padding:4px 7px;"></button>
+        </div>
+      </aside>
+      <main class="main-area"><div class="main-inner" id="mainInner"></div></main>
+      <div id="modalRoot"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+  `;
+
+  if (!document.getElementById("cuff-style")) {
+    var styleEl = document.createElement("style");
+    styleEl.id = "cuff-style";
+    styleEl.textContent = CSS_TEXT;
+    document.head.appendChild(styleEl);
+  }
+  // Em arquivos grandes como esse, o navegador às vezes ainda não terminou
+  // de montar o <body> quando esse script (síncrono, no <head>) roda --
+  // vira "Cannot set properties of null (setting 'innerHTML')" (confirmado
+  // ao vivo: document.body null, readyState "loading" nesse ponto). Espera
+  // o DOMContentLoaded antes de continuar, nesse caso -- appMain() de novo
+  // é seguro, o bloco de CSS acima já é idempotente (guardado pelo getElementById).
+  if (!document.body) {
+    document.addEventListener("DOMContentLoaded", appMain, { once: true });
+    return;
+  }
+  document.body.innerHTML = BODY_SHELL;
+
+  /* =========================================================
+     HELPERS
+     ========================================================= */
+  var $ = function (id) { return document.getElementById(id); };
+  // Central de Lançamentos e o extrato de 1 mês (tabelas largas, muitas
+  // colunas) ocupam a página toda -- as outras telas (grade de meses,
+  // Regras, Configurações) continuam com a largura normal.
+  function setLargura(full) {
+    var el = $("mainInner");
+    if (el) el.classList.toggle("full", !!full);
+  }
+
+  function temaAtual() {
+    try { return localStorage.getItem("tema") === "light" ? "light" : "dark"; } catch (e) { return "dark"; }
+  }
+  function renderBotaoTema() {
+    var btn = $("btnTema");
+    if (btn) btn.textContent = temaAtual() === "dark" ? "☀" : "🌙";
+  }
+  function alternarTema() {
+    var novo = temaAtual() === "dark" ? "light" : "dark";
+    try { localStorage.setItem("tema", novo); } catch (e) { /* ignore */ }
+    document.documentElement.setAttribute("data-theme", novo);
+    renderBotaoTema();
+  }
+  $("btnTema").addEventListener("click", alternarTema);
+  renderBotaoTema();
+
+  var fmtBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var MONTHS = [["1","Janeiro"],["2","Fevereiro"],["3","Março"],["4","Abril"],["5","Maio"],["6","Junho"],
+    ["7","Julho"],["8","Agosto"],["9","Setembro"],["10","Outubro"],["11","Novembro"],["12","Dezembro"]];
+  var MONTH_NAME = {}; MONTHS.forEach(function (m) { MONTH_NAME[m[0]] = m[1]; });
+
+  function isoToBR(iso) {
+    if (!iso) return "";
+    var p = iso.split("-");
+    return p.length === 3 ? (p[2] + "/" + p[1] + "/" + p[0]) : iso;
+  }
+  function escapeAttr(s) { return String(s == null ? "" : s).replace(/"/g, "&quot;"); }
+  function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function uid() { return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9); }
+
+  function showToast(msg) {
+    var t = $("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._h);
+    showToast._h = setTimeout(function () { t.classList.remove("show"); }, 2800);
+  }
+  function setStatus(kind, text) {
+    var dot = $("statusDot"), txt = $("statusText");
+    if (!dot || !txt) return;
+    dot.className = "status-dot" + (kind ? " " + kind : "");
+    txt.textContent = text;
+  }
+
+  function api(path, opts) {
+    opts = opts || {};
+    opts.credentials = "include";
+    return fetch("/api" + path, opts).then(function (r) {
+      if (!r.ok) {
+        return r.json().catch(function () { return {}; }).then(function (e) {
+          throw new Error(e.erro || ("Erro " + r.status));
+        });
+      }
+      return r.status === 204 ? null : r.json();
+    });
+  }
+
+  function closeModal() { $("modalRoot").innerHTML = ""; }
+  function openModal(html, wide) {
+    $("modalRoot").innerHTML = '<div class="modal-overlay" id="modalOverlay"><div class="modal' + (wide ? " wide" : "") + '">' + html + "</div></div>";
+    $("modalOverlay").addEventListener("mousedown", function (e) { if (e.target.id === "modalOverlay") closeModal(); });
+  }
+
+  /* =========================================================
+     STATE
+     ========================================================= */
+  var params = new URLSearchParams(location.search);
+  var empresaId = params.get("empresaId");
+  var empresaNome = params.get("empresaNome") || "";
+  var embedded = params.get("embedded") === "1";
+
+  var CONTAS = []; // contas cadastradas (ver ContaBancariaCuff)
+  var contaId = null;
+  var ano = new Date().getFullYear();
+  var mesesComDados = []; // meses (número) que já têm cache local, do ano atual
+  var secao = "extrato"; // "extrato" | "central" | "regras" | "config"
+  var view = "meses"; // dentro de "extrato": "meses" | "lancamentos"
+  var mesAberto = null;
+  var docAtual = null; // DocumentoCuff do mês aberto
+  var buscando = {}; // { mes: true } enquanto busca no Bling
+  var EMPRESTIMOS = null; // cache (Controles > Empréstimos) pra vincular parcela
+  var REGRAS = [];
+  var REGRAS_TAB = "D"; // "" | "D" | "C" -- aba atual da página de Regras
+  var REGRAS_BANCO_FILTRO = "todos"; // "todos" | contaId -- filtro de banco da página de Regras
+  var REGRAS_BUSCA = ""; // texto de busca (histórico/categoria) da página de Regras
+  var CENTRAL_LINHAS = null;
+  var CENTRAL_FILTROS = { contaId: "", busca: "", tipo: "", de: "", ate: "" };
+  // Datas da Central lembradas por empresa (pedido do Izaias, 25/09/2026): mantém sempre o último De/Até usado; a única exceção é uma NOVA importação (busca de 1 mês
+  // no Bling), que leva as datas pro mês importado.
+  function chaveDatasCentral() { return "cuff_bancaria_datas_central_" + empresaId; }
+  function salvarDatasCentral() { try { localStorage.setItem(chaveDatasCentral(), JSON.stringify({ de: CENTRAL_FILTROS.de || "", ate: CENTRAL_FILTROS.ate || "" })); } catch (e) { /* ignore */ } }
+  function marcarImportacaoCentral(ano, mm) {
+    var a = Number(ano), m = Number(mm), p = String(m).padStart(2, "0");
+    try { localStorage.setItem(chaveDatasCentral(), JSON.stringify({ de: a + "-" + p + "-01", ate: a + "-" + p + "-" + String(new Date(a, m, 0).getDate()).padStart(2, "0") })); } catch (e) { /* ignore */ }
+  }
+  (function () {
+    try { var d = JSON.parse(localStorage.getItem(chaveDatasCentral()) || "null"); if (d) { CENTRAL_FILTROS.de = d.de || ""; CENTRAL_FILTROS.ate = d.ate || ""; } } catch (e) { /* ignore */ }
+  })();
+
+  // "Formatação de texto" -- mesmo padrão da MIB: fica no navegador
+  // (localStorage), não no servidor, vale pra qualquer empresa desse
+  // navegador. Maiúsculo/sem-especiais vêm LIGADOS por padrão.
+  var CONFIG_TEXTO_KEY = "cuff_config_texto";
+  function carregarConfigTexto() {
+    try {
+      var salvo = JSON.parse(localStorage.getItem(CONFIG_TEXTO_KEY) || "null");
+      if (salvo && typeof salvo === "object") return { maiusculo: salvo.maiusculo !== false, semEspeciais: salvo.semEspeciais !== false };
+    } catch (e) { /* ignore */ }
+    return { maiusculo: true, semEspeciais: true };
+  }
+  var CONFIG_TEXTO = carregarConfigTexto();
+  function salvarConfigTexto() {
+    try { localStorage.setItem(CONFIG_TEXTO_KEY, JSON.stringify(CONFIG_TEXTO)); } catch (e) { /* ignore */ }
+  }
+  function removerAcentos(s) {
+    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+  function formatarTexto(s) {
+    var t = String(s || "");
+    if (CONFIG_TEXTO.semEspeciais) t = removerAcentos(t);
+    if (CONFIG_TEXTO.maiusculo) t = t.toUpperCase();
+    return t;
+  }
+
+  // Histórico padrão (opcional, por regra) -- mesma ideia da MIB: se a
+  // regra que bateu tiver um texto padrão, ele SUBSTITUI o histórico do
+  // Bling, com os atalhos de data resolvidos pela data do PRÓPRIO
+  // lançamento (não "hoje").
+  var ATALHOS_HISTORICO_PADRAO = [
+    { token: "<MES ATUAL>", ex: "07/2026" }, { token: "<MES ATUAL ABREV>", ex: "JUL/2026" },
+    { token: "<MES ANTERIOR>", ex: "06/2026" }, { token: "<MES ANTERIOR ABREV>", ex: "JUN/2026" },
+    { token: "<DATA ATUAL>", ex: "22/07/2026" }, { token: "<ANO ATUAL>", ex: "2026" },
+  ];
+  var MES_ABREV = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+  function substituirTokensHistorico(texto, dataIso) {
+    var partes = String(dataIso || "").split("-");
+    if (partes.length !== 3) return texto;
+    var ano = Number(partes[0]), mes = Number(partes[1]), dia = partes[2];
+    if (!ano || !mes) return texto;
+    var mesAnt = mes === 1 ? 12 : mes - 1, anoAnt = mes === 1 ? ano - 1 : ano;
+    var mesTxt = String(mes).padStart(2, "0"), mesAntTxt = String(mesAnt).padStart(2, "0");
+    return texto
+      .replace(/<\s*MES\s+ATUAL\s+ABREV\s*>/gi, (MES_ABREV[mes - 1] || mesTxt) + "/" + ano)
+      .replace(/<\s*MES\s+ATUAL\s*>/gi, mesTxt + "/" + ano)
+      .replace(/<\s*MES\s+ANTERIOR\s+ABREV\s*>/gi, (MES_ABREV[mesAnt - 1] || mesAntTxt) + "/" + anoAnt)
+      .replace(/<\s*MES\s+ANTERIOR\s*>/gi, mesAntTxt + "/" + anoAnt)
+      .replace(/<\s*DATA\s+ATUAL\s*>/gi, dia + "/" + mesTxt + "/" + ano)
+      .replace(/<\s*ANO\s+ATUAL\s*>/gi, String(ano));
+  }
+  function historicoResolvido(l) {
+    var t = l.historicoPadrao ? substituirTokensHistorico(l.historicoPadrao, l.data) : l.historico;
+    return formatarTexto(t);
+  }
+
+  function pillGroup(id, opcoes, valorAtual) {
+    return '<div class="pill-group" id="' + id + '">' + opcoes.map(function (o) {
+      return '<button type="button" data-valor="' + o[0] + '" class="' + (o[0] === valorAtual ? "active" : "") + '">' + o[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function ligarPillGroup(id) {
+    document.querySelectorAll("#" + id + " button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll("#" + id + " button").forEach(function (b) { b.classList.toggle("active", b === btn); });
+      });
+    });
+  }
+  function valorPillGroup(id) {
+    var ativo = document.querySelector("#" + id + " button.active");
+    return ativo ? ativo.getAttribute("data-valor") : "";
+  }
+
+  /* =========================================================
+     VOLTAR / BOOTSTRAP
+     ========================================================= */
+  function renderVoltarHub() {
+    var link = $("voltarHub");
+    if (!link) return;
+    if (empresaId) {
+      link.href = "/grupos/empresa/" + encodeURIComponent(empresaId);
+      link.textContent = "← " + (empresaNome || "Empresa");
+    }
+    link.onclick = function (e) {
+      if (embedded && window.parent !== window) {
+        e.preventDefault();
+        window.parent.postMessage({ type: "hub:voltar" }, "*");
+        return;
+      }
+      if (history.length > 1) { e.preventDefault(); history.back(); }
+    };
+  }
+
+  function iniciar() {
+    renderVoltarHub();
+    if (!empresaId) {
+      $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Abra essa ferramenta a partir de uma empresa no hub (Grupo Cuff).</div></div>';
+      setStatus("warn", "Sem empresa.");
+      return;
+    }
+    setStatus("busy", "Carregando…");
+    carregarEmpresasDoGrupo();
+    carregarContas();
+  }
+
+  // Seletor "Empresa" na barra lateral -- troca entre as empresas do Grupo
+  // Cuff (CJ/COOL/CUFF) sem precisar voltar pro hub. Igual à MIB, só que lá
+  // é uma lista própria da ferramenta; aqui é o cadastro central do hub
+  // (GET /hub/empresas?grupoId=), já que essa ferramenta nasceu depois da
+  // Central de Empresas existir.
+  function carregarEmpresasDoGrupo() {
+    api("/hub/empresas?grupoId=grupo-cuff").then(function (lista) {
+      var sel = $("selEmpresa");
+      if (!sel) return;
+      sel.innerHTML = lista.map(function (e) {
+        return '<option value="' + escapeAttr(e.id) + '"' + (e.id === empresaId ? " selected" : "") + ">" + escapeHtml(e.nome) + "</option>";
+      }).join("");
+      sel.onchange = function () {
+        var novoId = sel.value;
+        if (novoId === empresaId) return;
+        if (embedded && window.parent !== window) {
+          window.parent.postMessage({ type: "hub:trocar-empresa", empresaId: novoId }, "*");
+        } else {
+          var qs = new URLSearchParams(location.search);
+          qs.set("empresaId", novoId);
+          var alvo = lista.filter(function (e) { return e.id === novoId; })[0];
+          if (alvo) qs.set("empresaNome", alvo.nome);
+          location.search = qs.toString();
+        }
+      };
+    }).catch(function () { /* sem lista de empresas não trava a ferramenta -- só não mostra o seletor */ });
+  }
+
+  function carregarContas() {
+    api("/cuff-bancaria/empresas/" + empresaId + "/contas").then(function (contas) {
+      CONTAS = contas;
+      if (!contaId || !CONTAS.some(function (c) { return c.id === contaId; })) {
+        contaId = CONTAS.length ? CONTAS[0].id : null;
+      }
+      renderNav();
+      setStatus("ok", "Conectado ao servidor do hub.");
+      abrirSecao(secao);
+    }).catch(function (err) {
+      setStatus("warn", "Erro.");
+      $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Erro ao carregar: ' + escapeHtml(err.message) + "</div></div>";
+    });
+  }
+
+  function renderNav() {
+    var htmlContas = CONTAS.map(function (c) {
+      return '<button class="nav-item' + (secao === "extrato" && c.id === contaId ? " active" : "") + '" data-conta="' + escapeAttr(c.id) + '">' +
+        '<span class="nav-item-icon">🏦</span><span class="nav-item-label">' + escapeHtml(c.apelido) + "</span></button>";
+    }).join("") || '<div class="hint-note" style="padding:4px;">Nenhuma conta cadastrada ainda.</div>';
+    $("navContas").innerHTML = htmlContas;
+    document.querySelectorAll("#navContas [data-conta]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-conta");
+        contaId = id;
+        secao = "extrato";
+        view = "meses";
+        renderNav();
+        carregarMeses();
+      });
+    });
+
+    var itensFerramentas = [
+      ["central", "📒", "Central de lançamentos"],
+      ["regras", "📐", "Regras contábeis"],
+      ["comprovantes", "📎", "Comprovantes"],
+      ["config", "⚙", "Configurações"],
+    ];
+    $("navFerramentas").innerHTML = itensFerramentas.map(function (it) {
+      return '<button class="nav-item' + (secao === it[0] ? " active" : "") + '" data-secao="' + it[0] + '">' +
+        '<span class="nav-item-icon">' + it[1] + '</span><span class="nav-item-label">' + it[2] + "</span></button>";
+    }).join("");
+    document.querySelectorAll("#navFerramentas [data-secao]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        secao = btn.getAttribute("data-secao");
+        renderNav();
+        abrirSecao(secao);
+      });
+    });
+    $("btnGerenciarContas").onclick = abrirGerenciarContas;
+  }
+
+  // Comprovantes (e-CAC): tela própria (app "comprovantes") + vínculo por valor/data na Central.
+  var COMPROVANTES = [];
+  var COMP_VINC = {};
+  // Página normal (com o menu lateral): roda o app "comprovantes" embutido (?embedded=1).
+  function abrirComprovantes() {
+    secao = "comprovantes";
+    setLargura(true);
+    $("mainInner").innerHTML = '<iframe src="/apps/comprovantes/index.html?embedded=1&modulo=cuff&empresaId=' + encodeURIComponent(empresaId) + '&empresaNome=' + encodeURIComponent(empresaNome) + '" style="width:100%;height:calc(100vh - 56px);border:0;background:transparent;display:block;"></iframe>';
+  }
+  function recalcularVinculosComprovantes() {
+    COMP_VINC = ComprovantesVinculo.vincular(COMPROVANTES, (CENTRAL_LINHAS || []).map(function (l) { return { chave: l.id, data: l.data, valor: l.debCred === "D" ? -Math.abs(l.valor) : Math.abs(l.valor) }; }));
+    // comprovante com 2+ tributos -> 1 linha por tributo, categoria "Lançamentos separados" (só na Central)
+    var sep = ComprovantesVinculo.separar(CENTRAL_LINHAS || [], COMP_VINC, function (l) { return l.id; });
+    CENTRAL_LINHAS = sep.lista.map(function (n) {
+      if (n._separado) { n.historico = n.descricao; n.categoria = "Lançamentos separados"; n.categoriaPropria = "Lançamentos separados"; n.valor = Math.abs(n.valor); }
+      return n;
+    });
+    Object.keys(sep.vincPorChave).forEach(function (k) { COMP_VINC[k] = sep.vincPorChave[k]; });
+  }
+
+  function abrirSecao(s) {
+    if (s === "extrato") { if (contaId) { view = "meses"; carregarMeses(); } else renderSemContas(); }
+    else if (s === "central") carregarCentral();
+    else if (s === "regras") carregarRegras();
+    else if (s === "comprovantes") abrirComprovantes();
+    else if (s === "config") renderConfiguracoes();
+  }
+
+  function renderSemContas() {
+    setLargura(false);
+    $("mainInner").innerHTML =
+      '<div class="card"><div class="card-body" style="text-align:center;padding:44px 20px;">' +
+      '<p style="font-weight:600;margin:0 0 6px;">Nenhuma conta cadastrada</p>' +
+      '<p class="hint-note" style="margin:0 0 16px;">Cadastre as contas do Bling (Caixas e Bancos) que essa empresa quer acompanhar.</p>' +
+      '<button class="btn btn-primary" id="btnGerenciarContas2">+ Gerenciar contas</button>' +
+      "</div></div>";
+    $("btnGerenciarContas2").onclick = abrirGerenciarContas;
+  }
+
+  /* =========================================================
+     GERENCIAR CONTAS (cadastro, apelido) -- busca ao vivo as contas
+     disponíveis no Bling (GET /contas-contabeis), única pro grupo inteiro.
+     ========================================================= */
+  var CONTAS_BLING_CACHE = null;
+  var contaExpandidaId = null; // qual card do accordion está aberto (mesmo padrão do MIB)
+
+  function abrirGerenciarContas() {
+    contaExpandidaId = null;
+    renderGerenciarContasModal(true);
+    if (!CONTAS_BLING_CACHE) {
+      api("/cuff-bancaria/contas-bling-disponiveis").then(function (lista) {
+        CONTAS_BLING_CACHE = lista;
+        renderGerenciarContasModal(false);
+      }).catch(function (err) {
+        CONTAS_BLING_CACHE = [];
+        showToast("Não deu pra buscar as contas do Bling: " + err.message);
+        renderGerenciarContasModal(false);
+      });
+    }
+  }
+
+  function renderGerenciarContasModal(carregandoDisponiveis) {
+    var cadastradas = CONTAS.map(function (c) {
+      var aberto = c.id === contaExpandidaId;
+      return '<div class="group-card' + (aberto ? " open" : "") + '" data-conta-card="' + escapeAttr(c.id) + '">' +
+        '<div class="group-head" data-conta-toggle="' + escapeAttr(c.id) + '">' +
+        '<div class="g-left"><span class="chevron">▸</span>' +
+        '<span style="width:9px;height:9px;border-radius:2px;background:var(--accent);flex:none;"></span>' +
+        '<div style="min-width:0;"><div class="g-title">' + escapeHtml(c.apelido) + '</div>' +
+        '<div class="g-sub">' + escapeHtml(c.descricaoBling) + (c.tipo ? " · " + escapeHtml(c.tipo) : "") + "</div></div></div>" +
+        '<div class="g-right"><button class="btn btn-ghost btn-sm btn-danger" data-remover-conta="' + escapeAttr(c.id) + '" title="Remover">🗑</button></div>' +
+        "</div>" +
+        '<div class="group-body">' +
+        '<div class="field-grid-2">' +
+        '<div class="field" style="margin-bottom:0;"><label class="field-label">Apelido</label><input class="plain-input" data-campo-apelido value="' + escapeAttr(c.apelido) + '" /></div>' +
+        '<div class="field" style="margin-bottom:0;"><label class="field-label">Conta no Bling</label><input class="plain-input" value="' + escapeAttr(c.descricaoBling) + '" disabled /></div>' +
+        "</div>" +
+        '<div class="field-grid-2">' +
+        '<div class="field" style="margin-bottom:0;"><label class="field-label">Conta no sistema</label><input class="plain-input" data-campo-conta-sistema placeholder="ex: 101" value="' + escapeAttr(c.contaSistema || "") + '" /></div>' +
+        '<div class="field" style="margin-bottom:0;"><label class="field-label">Conta Saldo Credor (passivo, pra zerar saldo negativo diário)</label><input class="plain-input" data-campo-conta-saldo-credor placeholder="ex: 3200" value="' + escapeAttr(c.contaSaldoCredor || "") + '" /></div>' +
+        "</div>" +
+        '<div class="field" style="margin-bottom:0;"><label class="field-label">Busca automática</label>' +
+        '<select class="plain-select" data-campo-auto-horas>' +
+        ["", "1", "3", "6", "12", "24"].map(function (h) {
+          var label = h === "" ? "Desligado (só manual)" : "A cada " + h + "h";
+          return '<option value="' + h + '"' + (String(c.blingAutoHoras || "") === h ? " selected" : "") + ">" + label + "</option>";
+        }).join("") +
+        "</select>" +
+        '<p class="hint-note" style="margin-top:4px;">' + (c.blingUltimoResultado ? escapeHtml(c.blingUltimoResultado) : "Ainda não tentou nenhuma busca automática.") + "</p>" +
+        "</div>" +
+        '<button class="btn btn-primary btn-sm" data-salvar-conta="' + escapeAttr(c.id) + '" style="align-self:flex-start;">Salvar</button>' +
+        "</div></div>";
+    }).join("") || '<div class="hint-note" style="padding:6px 4px;">Nenhuma conta cadastrada ainda.</div>';
+
+    var idsJaUsados = {}; CONTAS.forEach(function (c) { idsJaUsados[c.idContaFinanceira] = true; });
+    var opcoesDisponiveis = "";
+    if (carregandoDisponiveis) {
+      opcoesDisponiveis = '<option value="">Carregando contas do Bling…</option>';
+    } else {
+      var disponiveis = (CONTAS_BLING_CACHE || []).filter(function (cb) { return !idsJaUsados[cb.id]; });
+      opcoesDisponiveis = disponiveis.length
+        ? '<option value="">Selecione…</option>' + disponiveis.map(function (cb) {
+            return '<option value="' + cb.id + '" data-desc="' + escapeAttr(cb.descricao) + '" data-tipo="' + escapeAttr(cb.tipo || "") + '">' + escapeHtml(cb.descricao) + "</option>";
+          }).join("")
+        : '<option value="">Nenhuma conta nova disponível</option>';
+    }
+
+    openModal(
+      '<div class="modal-head"><h3>Contas bancárias</h3><button class="btn btn-ghost btn-sm" id="mClose">✕</button></div>' +
+      '<div class="modal-body">' +
+      '<div style="margin-bottom:18px;">' + cadastradas + "</div>" +
+      '<div class="hint-note" style="text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:8px;">Nova conta</div>' +
+      '<div class="field-grid-2">' +
+      '<div class="field"><label class="field-label">Conta (Caixas e Bancos, no Bling)</label><select class="plain-select" id="novaContaSel"' + (carregandoDisponiveis ? " disabled" : "") + ">" + opcoesDisponiveis + "</select></div>" +
+      '<div class="field"><label class="field-label">Apelido</label><input class="plain-input" id="novaContaApelido" placeholder="ex: SICOOB CJ" /></div>' +
+      "</div>" +
+      '<p class="hint-note">A lista de contas vem direto do Bling -- é a mesma pras 3 empresas do grupo, cada uma cadastra só as que usa.</p>' +
+      "</div>" +
+      '<div class="modal-foot"><span></span><button class="btn btn-primary" id="btnAddConta"' + (carregandoDisponiveis ? " disabled" : "") + '>+ Adicionar conta</button></div>'
+    );
+    $("mClose").addEventListener("click", function () { closeModal(); carregarContas(); });
+    var sel = $("novaContaSel");
+    sel.addEventListener("change", function () {
+      var opt = sel.options[sel.selectedIndex];
+      var apelidoInput = $("novaContaApelido");
+      if (opt && opt.getAttribute("data-desc") && !apelidoInput.value) apelidoInput.value = opt.getAttribute("data-desc");
+    });
+    var btnAdd = $("btnAddConta");
+    if (btnAdd) {
+      btnAdd.addEventListener("click", function () {
+        var opt = sel.options[sel.selectedIndex];
+        var idContaFinanceira = sel.value;
+        var apelido = $("novaContaApelido").value.trim();
+        if (!idContaFinanceira) { showToast("Escolha uma conta do Bling."); return; }
+        if (!apelido) { showToast("Informe um apelido."); return; }
+        btnAdd.disabled = true;
+        api("/cuff-bancaria/empresas/" + empresaId + "/contas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idContaFinanceira: Number(idContaFinanceira),
+            descricaoBling: opt.getAttribute("data-desc") || opt.textContent,
+            tipo: opt.getAttribute("data-tipo") || "",
+            apelido: apelido,
+          }),
+        }).then(function () {
+          return api("/cuff-bancaria/empresas/" + empresaId + "/contas");
+        }).then(function (contas) {
+          CONTAS = contas;
+          showToast("Conta adicionada.");
+          renderGerenciarContasModal(false);
+        }).catch(function (err) {
+          btnAdd.disabled = false;
+          showToast("Não deu pra adicionar: " + err.message);
+        });
+      });
+    }
+    document.querySelectorAll("[data-remover-conta]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var id = btn.getAttribute("data-remover-conta");
+        var c = CONTAS.filter(function (x) { return x.id === id; })[0];
+        if (!confirm('Remover "' + (c ? c.apelido : id) + '"? O extrato já buscado NÃO é apagado do disco, só some da lista.')) return;
+        api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + id, { method: "DELETE" }).then(function () {
+          return api("/cuff-bancaria/empresas/" + empresaId + "/contas");
+        }).then(function (contas) {
+          CONTAS = contas;
+          showToast("Conta removida.");
+          renderGerenciarContasModal(false);
+        }).catch(function (err) { showToast("Não deu pra remover: " + err.message); });
+      });
+    });
+    document.querySelectorAll("[data-conta-toggle]").forEach(function (head) {
+      head.addEventListener("click", function () {
+        var id = head.getAttribute("data-conta-toggle");
+        contaExpandidaId = contaExpandidaId === id ? null : id;
+        renderGerenciarContasModal(carregandoDisponiveis);
+      });
+    });
+    document.querySelectorAll("[data-salvar-conta]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var id = btn.getAttribute("data-salvar-conta");
+        var card = document.querySelector('[data-conta-card="' + id + '"]');
+        var novo = card.querySelector("[data-campo-apelido]").value.trim();
+        if (!novo) { showToast("Apelido não pode ficar vazio."); return; }
+        var body = {
+          apelido: novo,
+          contaSistema: card.querySelector("[data-campo-conta-sistema]").value.trim(),
+          contaSaldoCredor: card.querySelector("[data-campo-conta-saldo-credor]").value.trim(),
+          blingAutoHoras: card.querySelector("[data-campo-auto-horas]").value || null,
+        };
+        api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + id, {
+          method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        }).then(function (contas) {
+          CONTAS = contas;
+          showToast("Conta atualizada.");
+          renderGerenciarContasModal(false);
+        }).catch(function (err) { showToast("Não deu pra salvar: " + err.message); });
+      });
+    });
+  }
+
+  /* =========================================================
+     GRADE DE MESES
+     ========================================================= */
+  function carregarMeses() {
+    view = "meses";
+    setLargura(false);
+    $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Carregando meses…</div></div>';
+    var cId = contaId;
+    api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + cId + "/" + ano + "/meses").then(function (meses) {
+      if (cId !== contaId) return;
+      mesesComDados = meses;
+      renderMeses();
+    }).catch(function (err) {
+      $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Erro: ' + escapeHtml(err.message) + "</div></div>";
+    });
+  }
+
+  function renderMeses() {
+    var conta = CONTAS.filter(function (c) { return c.id === contaId; })[0];
+    var temDados = {}; mesesComDados.forEach(function (m) { temDados[m] = true; });
+    // Mesmo padrão da MIB ("Escolha o mês"): o card inteiro é clicável e
+    // leva pro mês (que aí sim mostra "Buscar do Bling" se ainda não tiver
+    // nada) -- não tem botão de ação solto no card.
+    var cards = MONTHS.map(function (m) {
+      var mm = m[0], nome = m[1], tem = !!temDados[mm], carregandoMes = !!buscando[mm];
+      return '<div class="month-card' + (tem ? " tem-dados" : "") + '" data-mes-card="' + mm + '"' + (carregandoMes ? "" : ' style="cursor:pointer;"') + '>' +
+        '<div class="mes-nome">' + nome + '</div>' +
+        '<div class="mes-status' + (tem ? " ok" : "") + '"><span class="dot"></span>' + (tem ? "Conciliação salva" : "Sem conciliação") + "</div>" +
+        (carregandoMes ? '<div class="mes-carregando"><span class="spinner"></span>Buscando no Bling…</div>' : "") +
+        "</div>";
+    }).join("");
+    $("mainInner").innerHTML =
+      '<div class="page-head"><div>' +
+      '<p class="page-eyebrow">' + escapeHtml(empresaNome) + (conta ? " · " + escapeHtml(conta.apelido) : "") + "</p>" +
+      '<h1 class="page-title">Escolha o mês</h1></div></div>' +
+      '<div class="card">' +
+      '<div class="card-head"><div class="year-nav">' +
+      '<button class="btn btn-ghost btn-sm" id="anoAnterior">‹</button>' +
+      '<span class="year-label">' + ano + '</span>' +
+      '<button class="btn btn-ghost btn-sm" id="anoProximo">›</button></div>' +
+      '<button class="btn btn-ghost btn-sm" id="btnSincronizarTudo" title="Busca todos os meses do ano no Bling">🔄 Sincronizar tudo</button>' +
+      "</div>" +
+      '<div class="card-body"><div class="month-grid">' + cards + "</div></div></div>";
+
+    $("anoAnterior").addEventListener("click", function () { ano--; carregarMeses(); });
+    $("anoProximo").addEventListener("click", function () { ano++; carregarMeses(); });
+    document.querySelectorAll("[data-mes-card]").forEach(function (card) {
+      card.addEventListener("click", function () { abrirExtrato(card.getAttribute("data-mes-card")); });
+    });
+    $("btnSincronizarTudo").addEventListener("click", sincronizarTodosMeses);
+  }
+
+  function buscarMes(mm, semMarcar) {
+    var cId = contaId, anoAtual = ano;
+    return api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + cId + "/" + anoAtual + "/" + mm + "/buscar", { method: "POST" }).then(function (r) {
+      if (!semMarcar) marcarImportacaoCentral(anoAtual, mm); // nova importação de 1 mês: a Central abre nesse mês
+      return r;
+    });
+  }
+
+  // "🔄 Sincronizar tudo" -- busca os 12 meses do ano corrente de uma vez,
+  // um por um (mesma ideia do botão da MIB), sem precisar abrir mês por mês.
+  function sincronizarTodosMeses() {
+    if (!confirm("Buscar os 12 meses de " + ano + " no Bling agora (substitui o que já tiver de cada um)?")) return;
+    var cId = contaId, anoAtual = ano;
+    var mm = 1;
+    setStatus("busy", "Sincronizando " + MONTH_NAME["1"] + "/" + anoAtual + "…");
+    function proximo() {
+      if (cId !== contaId || anoAtual !== ano) return;
+      if (mm > 12) { setStatus("ok", "Pronto."); showToast("Sincronização concluída."); carregarMeses(); return; }
+      setStatus("busy", "Sincronizando " + MONTH_NAME[String(mm)] + "/" + anoAtual + "…");
+      buscarMes(String(mm), true).then(function () { mm++; proximo(); }).catch(function (err) {
+        setStatus("warn", "Erro em " + MONTH_NAME[String(mm)] + ": " + err.message);
+        mm++; proximo();
+      });
+    }
+    proximo();
+  }
+
+  /* =========================================================
+     EXTRATO DO MÊS
+     ========================================================= */
+  function abrirExtrato(mm) {
+    view = "extrato";
+    mesAberto = mm;
+    setLargura(true);
+    $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Carregando lançamentos…</div></div>';
+    api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + contaId + "/" + ano + "/" + mm).then(function (doc) {
+      docAtual = doc;
+      renderExtrato();
+    }).catch(function (err) {
+      $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Erro: ' + escapeHtml(err.message) + "</div></div>";
+    });
+  }
+
+  var xVermelho = '<span style="color:var(--danger);font-weight:800;" title="Sem conta no sistema cadastrada">✕</span>';
+
+  function linhaLancamento(l, contextoConta, contaSistemaConta) {
+    // Linha de tabela compartilhada entre o Extrato (1 conta) e a Central de
+    // Lançamentos (todas as contas) -- `contextoConta` só aparece na
+    // Central. Débito/Crédito são as CONTAS (código da "Conta no sistema"
+    // cadastrada em Gerenciar), igual à MIB: o lado do banco mostra o
+    // código, o outro lado fica pendente (✕) até ter uma conta contábil de
+    // verdade pra contrapartida (o Cuff ainda não tem isso). "Categoria" é
+    // coluna própria, separada -- é a categoria que já vem pronta do Bling.
+    var ent = l.debCred === "C";
+    var celBanco = contaSistemaConta ? escapeHtml(contaSistemaConta) : xVermelho;
+    var celDebito = "<td>" + (ent ? celBanco : xVermelho) + "</td>";
+    var celCredito = "<td>" + (ent ? xVermelho : celBanco) + "</td>";
+    var celCategoria = "<td>" + escapeHtml(formatarTexto(l.categoriaPropria || l.categoria)) + "</td>";
+    var vinculado = !!l.vinculoControleId;
+    var iconeVinculo = l._separado ? "" : vinculado
+      ? '<button class="link-btn linked" data-desvincular="' + escapeAttr(l.id) + '" title="Vinculado -- clique pra desvincular">🔗</button>'
+      : (ent ? "" : '<button class="link-btn unlinked" data-vincular="' + escapeAttr(l.id) + '" title="Vincular a uma parcela de empréstimo">🔗</button>');
+    if (COMP_VINC[l.id]) iconeVinculo += '<button class="link-btn" data-comprovante="' + escapeAttr(l.id) + '" title="' + escapeAttr(ComprovantesVinculo.resumo(COMP_VINC[l.id])) + '">📎</button>';
+    return "<tr>" +
+      (contextoConta ? "<td>" + escapeHtml(contextoConta) + "</td>" : "") +
+      "<td>" + isoToBR(l.data) + "</td>" +
+      celDebito + celCredito + celCategoria +
+      '<td class="wrap">' + historicoResolvido(l) + "</td>" +
+      '<td class="num mono ' + (ent ? "valor-entrada" : "valor-saida") + '">' + (ent ? "+ " : "− ") + fmtBRL.format(Math.abs(l.valor)) + "</td>" +
+      '<td class="ctr"><button class="link-btn unlinked" data-criar-regra="' + escapeAttr(l.id) + '" title="Criar regra a partir deste lançamento">➕</button>' + iconeVinculo + "</td>" +
+      "</tr>";
+  }
+
+  function ligarBotoesCriarRegra(porLancamento) {
+    document.querySelectorAll("[data-criar-regra]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var l = porLancamento[btn.getAttribute("data-criar-regra")];
+        if (l) abrirModalRegra(null, l.historico, l.debCred, l.categoria);
+      });
+    });
+  }
+
+  var TIPO_REGRA = [["", "Qualquer"], ["D", "Saída"], ["C", "Entrada"]];
+
+  // Salva a lista inteira de regras (PUT) e, se pedido, reprocessa os meses
+  // já buscados na hora -- diferente da MIB (que recalcula a conta contábil
+  // ao vivo na Central, sem precisar "reprocessar" nada): aqui a
+  // categoriaPropria/historicoPadrao ficam gravadas no LancamentoCuff no
+  // momento da busca (ver routes/cuffBancaria.ts aplicarRegras), então uma
+  // regra nova só reflete nos meses já salvos depois desse passo extra.
+  function salvarRegrasCuff(novasRegras, silencioso) {
+    return api("/cuff-bancaria/empresas/" + empresaId + "/regras", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(novasRegras),
+    }).then(function (regras) {
+      REGRAS = regras;
+      return api("/cuff-bancaria/empresas/" + empresaId + "/regras/reprocessar", { method: "POST" });
+    }).then(function () {
+      if (!silencioso) renderRegras();
+      return REGRAS;
+    }).catch(function (err) { showToast("Não deu pra salvar: " + err.message); });
+  }
+
+  // Regra ativa que bateria HOJE num lançamento da Central -- mesma lógica
+  // do regraBate do servidor (routes/cuffBancaria.ts), portada pro cliente
+  // só pra calcular "Usos" na página de Regras.
+  function regraCuffBate(regra, l, contaId) {
+    if (!regra.ativa) return false;
+    if (regra.tipo && regra.tipo !== l.debCred) return false;
+    if (regra.contaId && regra.contaId !== contaId) return false;
+    if (regra.valor != null && regra.valor !== "") {
+      if (Math.abs(Math.abs(l.valor) - Number(regra.valor)) > 0.005) return false;
+      if (!regra.texto) return true;
+    }
+    var alvo = (l.historico || "").toLowerCase();
+    var texto = (regra.texto || "").toLowerCase();
+    switch (regra.modo) {
+      case "contem": return alvo.indexOf(texto) !== -1;
+      case "comeca": return alvo.indexOf(texto) === 0;
+      case "termina": return texto === "" ? false : alvo.slice(-texto.length) === texto;
+      case "exato": return alvo === texto;
+      case "regex":
+        try { return new RegExp(regra.texto, "i").test(l.historico || ""); } catch (e) { return false; }
+      default: return false;
+    }
+  }
+  function regraSugeridaParaCuff(l) {
+    var ativasOrdenadas = REGRAS.filter(function (r) { return r.ativa; }).sort(function (a, b) { return a.ordem - b.ordem; });
+    for (var i = 0; i < ativasOrdenadas.length; i++) {
+      if (regraCuffBate(ativasOrdenadas[i], l, l.contaId)) return ativasOrdenadas[i];
+    }
+    return null;
+  }
+  /** Quantos lançamentos já salvos (sem vínculo de parcela -- esses já têm
+   * outra origem de resolução) cada regra classificaria hoje, na ordem de
+   * prioridade atual. Só faz sentido com CENTRAL_LINHAS carregado. */
+  function calcularUsosPorRegra() {
+    var usos = {};
+    (CENTRAL_LINHAS || []).forEach(function (l) {
+      if (l.vinculoControleId) return;
+      var r = regraSugeridaParaCuff(l);
+      if (r) usos[r.id] = (usos[r.id] || 0) + 1;
+    });
+    return usos;
+  }
+
+  function moverRegra(id, direcao) {
+    var visiveis = REGRAS.filter(function (r) { return r.tipo === REGRAS_TAB; }).sort(function (a, b) { return a.ordem - b.ordem; });
+    var idx = visiveis.findIndex(function (r) { return r.id === id; });
+    var vizinho = direcao === "up" ? visiveis[idx - 1] : visiveis[idx + 1];
+    if (idx === -1 || !vizinho) return;
+    var atual = visiveis[idx];
+    var ordemAtual = atual.ordem, ordemVizinho = vizinho.ordem;
+    var novasRegras = REGRAS.map(function (r) {
+      if (r.id === atual.id) return Object.assign({}, r, { ordem: ordemVizinho });
+      if (r.id === vizinho.id) return Object.assign({}, r, { ordem: ordemAtual });
+      return r;
+    });
+    salvarRegrasCuff(novasRegras, true).then(function () { renderRegras(); });
+  }
+
+  function exportarRegrasJson() {
+    var blob = new Blob([JSON.stringify(REGRAS, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "regras-cuff-" + empresaId + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function importarRegrasJson(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var novas = JSON.parse(reader.result);
+        if (!Array.isArray(novas)) throw new Error("Devia ser uma lista de regras.");
+        var baseOrdem = REGRAS.length;
+        novas.forEach(function (r, i) { r.id = uid(); r.ordem = baseOrdem + i; });
+        salvarRegrasCuff(REGRAS.concat(novas), true).then(function () {
+          renderRegras();
+          showToast(novas.length + " regra(s) importada(s).");
+        });
+      } catch (e) { showToast("Arquivo inválido: " + e.message); }
+    };
+    reader.readAsText(file);
+  }
+
+  /** Modal de regra -- serve pra criar (regraExistente null, aberto pelo
+   * "+ Nova regra" da lista OU pelo ➕ de um lançamento no Extrato/Central)
+   * e pra editar (regraExistente preenchido, aberto por duplo clique numa
+   * linha da lista) -- mesmo modelo da MIB (abrirModalRegra), só sem o
+   * campo "Onde comparar" (extrato/relatório) que a MIB tem e o Cuff não. */
+  // "3.100,00" / "3100" / "3100.5" -> número (módulo); vazio/inválido -> null
+  function lerValorRegra(txt) {
+    var t = String(txt || "").trim();
+    if (!t) return null;
+    if (t.indexOf(",") !== -1) t = t.replace(/./g, "").replace(",", ".");
+    var v = parseFloat(t);
+    return isNaN(v) ? null : Math.abs(v);
+  }
+  function abrirModalRegra(regraExistente, historicoInicial, tipoInicial, categoriaInicial) {
+    var editando = !!regraExistente;
+    var contasOpcoes = '<option value="">Todas as contas</option>' +
+      CONTAS.map(function (c) { return '<option value="' + c.id + '"' + (editando && regraExistente.contaId === c.id ? " selected" : "") + ">" + escapeHtml(c.apelido) + "</option>"; }).join("");
+    openModal(
+      '<div class="modal-head"><h3>' + (editando ? "Editar regra" : "Criar regra") + '</h3>' +
+      '<div style="display:flex;align-items:center;gap:14px;">' +
+      '<label class="check-inline"><input type="checkbox" id="novaRegraAtiva"' + (!editando || regraExistente.ativa ? " checked" : "") + ' /> Ativa</label>' +
+      '<button class="btn btn-ghost btn-sm" id="mClose">✕</button></div></div>' +
+      '<div class="modal-body" style="display:flex;flex-direction:column;gap:0;">' +
+      '<div class="form-section">' +
+      '<p class="form-section-title">O que identificar</p>' +
+      '<div class="field" style="margin-bottom:12px;"><label class="field-label">Histórico</label><input class="plain-input" id="novaRegraTexto" value="' + escapeAttr(editando ? regraExistente.texto : (historicoInicial || "")) + '" /></div>' +
+      '<div class="field" style="margin-bottom:12px;"><label class="field-label">Comparação</label>' + pillGroup("grupoModoLanc", MODOS_REGRA, editando ? regraExistente.modo : "contem") + "</div>" +
+      '<div class="field" style="margin-bottom:0;"><label class="field-label">Valor <span style="text-transform:none;font-weight:500;color:var(--faint);">(opcional -- só bate se o valor for exatamente esse, ex.: 3.100,00)</span></label><input class="plain-input mono" id="novaRegraValor" placeholder="Ex: 3100" style="max-width:200px;" value="' + escapeAttr(editando && regraExistente.valor != null ? String(regraExistente.valor).replace(".", ",") : "") + '" /></div>' +
+      "</div>" +
+      '<div class="form-section">' +
+      '<p class="form-section-title">Histórico padrão <span style="text-transform:none;font-weight:500;letter-spacing:normal;color:var(--faint);">(opcional)</span></p>' +
+      '<input class="plain-input" id="novaRegraHistPadrao" placeholder=\'Ex: "ALUGUEL REF. <MES ATUAL>"\' value="' + escapeAttr(editando ? (regraExistente.historicoPadrao || "") : "") + '" />' +
+      '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:9px;">' +
+      '<span class="hint-note">Atalhos:</span>' +
+      ATALHOS_HISTORICO_PADRAO.map(function (a) {
+        return '<button type="button" class="btn-atalho-hist" data-token="' + escapeAttr(a.token) + '">' + escapeHtml(a.token) + "</button>";
+      }).join("") +
+      "</div>" +
+      '<p class="hint-note" style="margin-top:8px;margin-bottom:0;">Se preencher, todo lançamento que bater com essa regra tem o histórico trocado por esse texto padrão.</p>' +
+      "</div>" +
+      '<div class="form-section">' +
+      '<p class="form-section-title">Onde aplicar</p>' +
+      '<div class="field-grid-2">' +
+      '<div class="field" style="margin-bottom:0;"><label class="field-label">Natureza</label>' + pillGroup("grupoTipoLanc", TIPO_REGRA, editando ? regraExistente.tipo : (tipoInicial || REGRAS_TAB)) + "</div>" +
+      '<div class="field" style="margin-bottom:0;"><label class="field-label">Vale para</label><select class="plain-select" id="novaRegraContaId">' + contasOpcoes + "</select></div>" +
+      "</div>" +
+      '<div class="field" style="margin-bottom:0;margin-top:12px;"><label class="field-label">Rótulo (categoria própria)</label><input class="plain-input" id="novaRegraCategoria" placeholder="ex: Aluguel salas" value="' + escapeAttr(editando ? regraExistente.categoriaPropria : (categoriaInicial || "")) + '" /></div>' +
+      "</div></div>" +
+      '<div class="modal-foot">' +
+      (editando ? '<button class="btn btn-ghost btn-sm" id="btnDelRegraModal" style="color:var(--danger);margin-right:auto;">Excluir</button>' : "") +
+      '<button class="btn btn-ghost btn-sm" id="btnCancelarRegraLanc">Cancelar</button>' +
+      '<button class="btn btn-primary" id="btnCriarRegraLanc">' + (editando ? "Salvar regra" : "+ Adicionar regra") + "</button></div>",
+      true
+    );
+    $("mClose").addEventListener("click", closeModal);
+    $("btnCancelarRegraLanc").addEventListener("click", closeModal);
+    $("novaRegraTexto").focus();
+    ligarPillGroup("grupoModoLanc");
+    ligarPillGroup("grupoTipoLanc");
+    document.querySelectorAll(".btn-atalho-hist").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var campo = $("novaRegraHistPadrao");
+        var token = btn.getAttribute("data-token");
+        campo.value = campo.value ? campo.value + " " + token : token;
+        campo.focus();
+      });
+    });
+    $("btnCriarRegraLanc").addEventListener("click", function () {
+      var texto = $("novaRegraTexto").value.trim();
+      var categoriaPropria = $("novaRegraCategoria").value.trim();
+      var valorRegra = lerValorRegra($("novaRegraValor").value);
+      if ($("novaRegraValor").value.trim() && valorRegra == null) { showToast("Valor inválido."); return; }
+      if ((!texto && valorRegra == null) || !categoriaPropria) { showToast("Preenche o histórico e/ou o valor, e o rótulo."); return; }
+      var novoTipo = valorPillGroup("grupoTipoLanc");
+      var camposComuns = {
+        texto: texto, modo: valorPillGroup("grupoModoLanc"), tipo: novoTipo,
+        categoriaPropria: categoriaPropria, historicoPadrao: $("novaRegraHistPadrao").value.trim() || undefined,
+        contaId: $("novaRegraContaId").value || null, ativa: $("novaRegraAtiva").checked,
+        valor: valorRegra != null ? valorRegra : undefined,
+      };
+      var novasRegras;
+      if (editando) {
+        novasRegras = REGRAS.map(function (r) { return r.id === regraExistente.id ? Object.assign({}, r, camposComuns) : r; });
+      } else {
+        novasRegras = REGRAS.concat([Object.assign({ id: uid(), ordem: REGRAS.length }, camposComuns)]);
+      }
+      salvarRegrasCuff(novasRegras, true).then(function () {
+        closeModal();
+        REGRAS_TAB = novoTipo;
+        showToast(editando ? "Regra atualizada." : "Regra criada e aplicada nos meses já buscados.");
+        if (secao === "extrato") abrirExtrato(mesAberto);
+        else if (secao === "central") carregarCentral(true);
+        else renderRegras();
+      }).catch(function (err) { showToast("Não deu pra salvar: " + err.message); });
+    });
+    if (editando) {
+      $("btnDelRegraModal").addEventListener("click", function () {
+        if (!confirm("Remover essa regra?")) return;
+        salvarRegrasCuff(REGRAS.filter(function (r) { return r.id !== regraExistente.id; }), true).then(function () {
+          closeModal();
+          renderRegras();
+          showToast("Regra removida.");
+        });
+      });
+    }
+  }
+
+  function ligarBotoesVinculo(porLancamentoId) {
+    // `porLancamentoId` mapeia id -> {contaId, ano, mes} (a Central junta
+    // lançamentos de vários meses/contas, então cada botão precisa saber de
+    // onde veio o lançamento clicado).
+    document.querySelectorAll("[data-vincular]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-vincular");
+        abrirVincularModal(id, porLancamentoId[id]);
+      });
+    });
+    document.querySelectorAll("[data-desvincular]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-desvincular");
+        var onde = porLancamentoId[id];
+        if (!confirm("Desfazer esse vínculo com a parcela do empréstimo?")) return;
+        api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + onde.contaId + "/" + onde.ano + "/" + onde.mes + "/desvincular", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lancamentoId: id }),
+        }).then(function () {
+          showToast("Vínculo desfeito.");
+          if (secao === "extrato") abrirExtrato(mesAberto); else carregarCentral(true);
+        }).catch(function (err) { showToast("Não deu: " + err.message); });
+      });
+    });
+  }
+
+  /* =========================================================
+     VINCULAR A EMPRÉSTIMO (Controles) -- 🔗 por lançamento
+     ========================================================= */
+  function carregarEmprestimos() {
+    if (EMPRESTIMOS) return Promise.resolve(EMPRESTIMOS);
+    return api("/controles/empresas/" + empresaId + "/emprestimos").then(function (lista) {
+      EMPRESTIMOS = lista;
+      return lista;
+    });
+  }
+
+  function abrirVincularModal(lancamentoId, onde) {
+    carregarEmprestimos().then(function (emprestimos) {
+      var ativos = emprestimos.filter(function (e) { return e.ativo; });
+      if (!ativos.length) {
+        showToast("Nenhum empréstimo cadastrado em Controles ainda.");
+        return;
+      }
+      var opcoesEmp = ativos.map(function (e) { return '<option value="' + e.id + '">' + escapeHtml(e.apelido) + "</option>"; }).join("");
+      openModal(
+        '<div class="modal-head"><h3>Vincular a uma parcela</h3><button class="btn btn-ghost btn-sm" id="mClose">✕</button></div>' +
+        '<div class="modal-body">' +
+        '<div class="field"><label class="field-label">Empréstimo</label><select class="plain-select" id="vincEmprestimo">' + opcoesEmp + "</select></div>" +
+        '<div class="field"><label class="field-label">Parcela nº</label><input class="plain-input mono" id="vincParcela" type="number" min="1" /></div>' +
+        "</div>" +
+        '<div class="modal-foot"><button class="btn btn-primary" id="btnConfirmarVinculo">Vincular</button></div>'
+      );
+      var selEmp = $("vincEmprestimo");
+      function sugerirParcela() {
+        var emp = ativos.filter(function (e) { return e.id === selEmp.value; })[0];
+        if (!emp) return;
+        var pagas = {}; (emp.pagamentos || []).forEach(function (p) { pagas[p.numero] = true; });
+        var n = 1; while (pagas[n] && n <= emp.parcelas) n++;
+        $("vincParcela").value = n;
+      }
+      selEmp.addEventListener("change", sugerirParcela);
+      sugerirParcela();
+      $("mClose").addEventListener("click", closeModal);
+      $("btnConfirmarVinculo").addEventListener("click", function () {
+        var parcela = Number($("vincParcela").value);
+        if (!parcela || parcela < 1) { showToast("Informe o número da parcela."); return; }
+        api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + onde.contaId + "/" + onde.ano + "/" + onde.mes + "/vincular", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lancamentoId: lancamentoId, emprestimoId: selEmp.value, parcela: parcela }),
+        }).then(function () {
+          EMPRESTIMOS = null; // pagamentos mudaram -- recarrega na próxima
+          closeModal();
+          showToast("Vinculado.");
+          if (secao === "extrato") abrirExtrato(mesAberto); else carregarCentral(true);
+        }).catch(function (err) { showToast("Não deu pra vincular: " + err.message); });
+      });
+    }).catch(function (err) { showToast("Não deu pra carregar os empréstimos: " + err.message); });
+  }
+
+  function vincularTudo() {
+    if (!confirm('Vincular automaticamente TODOS os lançamentos já buscados que baterem com uma parcela pendente de algum empréstimo ativo (usa o "texto de referência" e o valor da parcela de cada um)?')) return;
+    setStatus("busy", "Vinculando…");
+    api("/cuff-bancaria/empresas/" + empresaId + "/vincular-tudo", { method: "POST" }).then(function (r) {
+      setStatus("ok", "Pronto.");
+      EMPRESTIMOS = null;
+      showToast(r.vinculados > 0 ? r.vinculados + " lançamento(s) vinculado(s)." : (r.mensagem || "Nenhum lançamento bateu."));
+      carregarCentral(true);
+    }).catch(function (err) { setStatus("warn", "Erro."); showToast("Não deu: " + err.message); });
+  }
+
+  function renderExtrato() {
+    var conta = CONTAS.filter(function (c) { return c.id === contaId; })[0];
+    if (!docAtual) {
+      // Ainda nunca buscou esse mês (diferente de "buscou e veio vazio") --
+      // mesmo espírito da MIB: o mês só ganha dados quando o usuário pede.
+      $("mainInner").innerHTML =
+        '<div class="page-head"><div>' +
+        '<a class="voltar-hub" href="#" id="voltarMesesLink" style="margin-bottom:8px;display:inline-flex;">← Voltar pros meses</a>' +
+        '<p class="page-eyebrow">' + escapeHtml(empresaNome) + " · " + escapeHtml(conta ? conta.apelido : "") + "</p>" +
+        '<h1 class="page-title">' + MONTH_NAME[mesAberto] + "/" + ano + "</h1></div></div>" +
+        '<div class="card"><div class="card-body" style="text-align:center;padding:44px 20px;">' +
+        '<p style="font-weight:600;margin:0 0 6px;">Esse mês ainda não foi buscado</p>' +
+        '<p class="hint-note" style="margin:0 0 16px;">Busca os lançamentos de "Caixas e Bancos" dessa conta direto no Bling.</p>' +
+        '<button class="btn btn-primary" id="btnBuscarBling">Buscar do Bling</button>' +
+        "</div></div>";
+      $("voltarMesesLink").addEventListener("click", function (e) { e.preventDefault(); view = "meses"; renderMeses(); });
+      $("btnBuscarBling").addEventListener("click", function () {
+        setStatus("busy", "Buscando…");
+        buscarMes(mesAberto).then(function (doc) {
+          docAtual = doc;
+          setStatus("ok", "Pronto.");
+          showToast(doc.lancamentos.length + " lançamento(s) buscado(s).");
+          renderExtrato();
+        }).catch(function (err) { setStatus("warn", "Erro."); showToast("Não deu pra buscar: " + err.message); });
+      });
+      return;
+    }
+    var lancamentos = (docAtual && docAtual.lancamentos) || [];
+    var entradas = 0, saidas = 0;
+    lancamentos.forEach(function (l) { if (l.debCred === "C") entradas += l.valor; else saidas += l.valor; });
+    var saldo = entradas - saidas;
+    var vinculados = lancamentos.filter(function (l) { return l.vinculoControleId; }).length;
+    var pendentes = lancamentos.filter(function (l) { return l.debCred === "D" && !l.vinculoControleId; }).length;
+
+    // Mesma estrutura da MIB: page-head + kpi-row + "Arquivos do mês" -- só
+    // muda a origem dos dados (Bling em vez de PDF/SuperLógica) e, por não
+    // ter relatório contábil pra casar, os KPIs viram Lançamentos/Entradas/
+    // Saídas/Saldo/Vinculados/Pendentes em vez de Extrato/Relatório/
+    // Vínculos/Pendentes extrato/Pendentes relatório/Diferença de soma.
+    var kpis =
+      '<div class="kpi-row">' +
+      '<div class="kpi"><div class="kpi-label">Lançamentos</div><div class="kpi-value">' + lancamentos.length + "</div></div>" +
+      '<div class="kpi ok"><div class="kpi-label">Entradas</div><div class="kpi-value">' + fmtBRL.format(entradas) + "</div></div>" +
+      '<div class="kpi danger"><div class="kpi-label">Saídas</div><div class="kpi-value">' + fmtBRL.format(saidas) + "</div></div>" +
+      '<div class="kpi ' + (saldo < 0 ? "danger" : "ok") + '"><div class="kpi-label">Saldo do mês</div><div class="kpi-value">' + fmtBRL.format(saldo) + "</div></div>" +
+      '<div class="kpi ok"><div class="kpi-label">Vinculados</div><div class="kpi-value">' + vinculados + "</div></div>" +
+      '<div class="kpi' + (pendentes ? " warn" : "") + '"><div class="kpi-label">Pendentes</div><div class="kpi-value">' + pendentes + "</div></div>" +
+      "</div>";
+
+    var arquivos =
+      '<div class="card">' +
+      '<div class="card-head"><h2>Lançamentos do mês</h2>' +
+      '<button class="btn btn-sm" id="btnAtualizarExtrato">↻ Atualizar do Bling</button></div>' +
+      '<div class="card-body">' +
+      '<div class="attach-grid">' +
+      '<div class="attach-card tem-arquivo"><div class="attach-icon">🏦</div>' +
+      '<div class="attach-info"><div class="attach-label">Extrato — ' + escapeHtml(conta ? conta.apelido : "") + " (Bling)</div>" +
+      '<div class="attach-file">' + (docAtual && docAtual.buscadoEm ? "Buscado em " + new Date(docAtual.buscadoEm).toLocaleString("pt-BR") : "") + "</div></div>" +
+      '<button class="btn btn-sm" id="btnTrocarExtrato">Trocar</button></div>' +
+      "</div></div></div>";
+
+    var ordenados = lancamentos.slice().sort(function (a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : 0; });
+    var linhas = ordenados.map(function (l) { return linhaLancamento(l, null, conta && conta.contaSistema); }).join("")
+      || '<tr><td colspan="7"><div class="empty-state">Nenhum lançamento nesse mês.</div></td></tr>';
+
+    $("mainInner").innerHTML =
+      '<div class="page-head"><div>' +
+      '<a class="voltar-hub" href="#" id="voltarMesesLink" style="margin-bottom:8px;display:inline-flex;">← Voltar pros meses</a>' +
+      '<p class="page-eyebrow">' + escapeHtml(empresaNome) + " · " + escapeHtml(conta ? conta.apelido : "") + "</p>" +
+      '<h1 class="page-title">' + MONTH_NAME[mesAberto] + "/" + ano + "</h1></div></div>" +
+      kpis + arquivos +
+      '<div class="card"><div class="table-scroll"><table><thead><tr><th>Data</th><th>Débito</th><th>Crédito</th><th>Categoria</th><th>Histórico</th><th class="num">Valor</th><th class="ctr">—</th></tr></thead><tbody>' +
+      linhas + "</tbody></table></div></div>";
+
+    $("voltarMesesLink").addEventListener("click", function (e) { e.preventDefault(); view = "meses"; renderMeses(); });
+    function atualizarExtrato() {
+      setStatus("busy", "Buscando…");
+      buscarMes(mesAberto).then(function (doc) {
+        docAtual = doc;
+        setStatus("ok", "Pronto.");
+        showToast("Extrato atualizado.");
+        renderExtrato();
+      }).catch(function (err) { setStatus("warn", "Erro."); showToast("Não deu pra atualizar: " + err.message); });
+    }
+    $("btnAtualizarExtrato").addEventListener("click", atualizarExtrato);
+    $("btnTrocarExtrato").addEventListener("click", atualizarExtrato);
+    var mapaOnde = {}, porLancamento = {};
+    lancamentos.forEach(function (l) { mapaOnde[l.id] = { contaId: contaId, ano: ano, mes: mesAberto }; porLancamento[l.id] = l; });
+    ligarBotoesVinculo(mapaOnde);
+    ligarBotoesCriarRegra(porLancamento);
+    document.querySelectorAll("[data-comprovante]").forEach(function (b) {
+      b.addEventListener("click", function () { var c = COMP_VINC[b.getAttribute("data-comprovante")]; if (c) ComprovantesVinculo.abrirDetalhe(c); });
+    });
+  }
+
+  /* =========================================================
+     CENTRAL DE LANÇAMENTOS -- todas as contas, todos os meses
+     ========================================================= */
+  function carregarCentral(mantendoFiltros) {
+    secao = "central";
+    setLargura(true);
+    if (!mantendoFiltros) $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Carregando lançamentos…</div></div>';
+    Promise.all([api("/cuff-bancaria/empresas/" + empresaId + "/central"), ComprovantesVinculo.carregar("cuff", empresaId)]).then(function (r) {
+      CENTRAL_LINHAS = r[0];
+      COMPROVANTES = r[1];
+      recalcularVinculosComprovantes();
+      renderCentral();
+    }).catch(function (err) {
+      $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Erro: ' + escapeHtml(err.message) + "</div></div>";
+    });
+  }
+
+  function filtrosCentralVazios() { return { contaId: "", busca: "", tipo: "", de: "", ate: "", valorMin: "", valorMax: "", pendentes: false }; }
+
+  function passaNoValor(valorAbs, min, max) {
+    if (min && valorAbs < parseFloat(min.replace(",", ".")) - 0.001) return false;
+    if (max && valorAbs > parseFloat(max.replace(",", ".")) + 0.001) return false;
+    return true;
+  }
+
+  // `ignorarPendentes` -- pula o filtro "Mostrar só pendentes" mesmo que
+  // esteja marcado. Usado só pra calcular o contador ao lado do checkbox
+  // (ver renderCentral/pendentesTotal): sem isso, o número vinha de TODOS
+  // os lançamentos, ignorando Conta/Tipo/De/Até/busca/valor -- confuso
+  // quando os filtros já reduziram a tela (pedido do Izaias, 12/09/2026:
+  // "quero que liste ali somente o da tela, não geral").
+  function linhasFiltradasCentral(ignorarPendentes) {
+    var f = CENTRAL_FILTROS;
+    salvarDatasCentral();
+    return (CENTRAL_LINHAS || []).filter(function (l) {
+      if (f.contaId && l.contaId !== f.contaId) return false;
+      if (f.tipo && l.debCred !== f.tipo) return false;
+      if (f.de && l.data < f.de) return false;
+      if (f.ate && l.data > f.ate) return false;
+      if (!passaNoValor(Math.abs(l.valor), f.valorMin, f.valorMax)) return false;
+      if (!ignorarPendentes && f.pendentes && l.vinculoControleId) return false;
+      if (f.busca) {
+        var alvo = (l.historico + " " + l.categoria + " " + (l.contatoNome || "")).toLowerCase();
+        if (alvo.indexOf(f.busca.toLowerCase()) === -1) return false;
+      }
+      return true;
+    }).sort(function (a, b) { return a.data < b.data ? 1 : a.data > b.data ? -1 : 0; });
+  }
+
+  // Mesmas rotas compartilhadas que a MIB usa (/exportar/xlsx, csv, txt --
+  // ver server/src/routes/exportacao.ts, genéricas, não são específicas de
+  // nenhum motor). D/C aqui é o mesmo critério da tela: o lado do banco é
+  // a "Conta no sistema" cadastrada, o outro lado leva a categoria (não tem
+  // conta contábil de contrapartida de verdade ainda, ver linhaLancamento).
+  function exportarCentralLancamentos(caminho, extensao, paraDominio) {
+    var linhas = linhasFiltradasCentral();
+    if (!linhas.length) return;
+    var contaSistemaPorId = {}; CONTAS.forEach(function (c) { contaSistemaPorId[c.id] = c.contaSistema || ""; });
+    var linhasExport = linhas.map(function (l) {
+      var contaBanco = contaSistemaPorId[l.contaId] || "";
+      var categoriaTxt = formatarTexto(l.categoriaPropria || l.categoria);
+      var ent = l.debCred === "C";
+      return {
+        origem: l.contaApelido, data: isoToBR(l.data),
+        debito: ent ? contaBanco : categoriaTxt, credito: ent ? categoriaTxt : contaBanco,
+        historico: historicoResolvido(l), valor: l.valor,
+      };
+    });
+    function pedirTxt() {
+      return fetch("/api" + caminho, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lancamentos: linhasExport }) })
+        .then(function (resp) { if (!resp.ok) throw new Error("Falha ao exportar."); return resp.blob(); });
+    }
+    if (paraDominio) {
+      LancarDominio.lancar({ modulo: "cuff", empresaId: empresaId, empresaNome: (typeof empresaNome === "function" ? empresaNome(empresaId) : "") || empresaId, quantidade: linhasExport.length,
+        obterTxt: function () { return pedirTxt().then(function (blob) { return blob.text(); }); } });
+      return;
+    }
+    pedirTxt()
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = "central-lancamentos-" + empresaId + "." + extensao;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      }).catch(function () { showToast("Não deu pra exportar."); });
+  }
+
+  function renderCentral() {
+    var f = CENTRAL_FILTROS;
+    var filtradas = linhasFiltradasCentral();
+    var somaTotal = filtradas.reduce(function (s, l) { return s + l.valor; }, 0);
+    var pendentesTotal = linhasFiltradasCentral(true).filter(function (l) { return l.debCred === "D" && !l.vinculoControleId; }).length;
+    var filtroAtivo = f.contaId || f.tipo || f.de || f.ate || f.busca || f.valorMin || f.valorMax || f.pendentes;
+
+    var opcoesContas = '<option value="">Todas as contas</option>' + CONTAS.map(function (c) {
+      return '<option value="' + c.id + '"' + (f.contaId === c.id ? " selected" : "") + ">" + escapeHtml(c.apelido) + "</option>";
+    }).join("");
+
+    var contaSistemaPorId = {}; CONTAS.forEach(function (c) { contaSistemaPorId[c.id] = c.contaSistema; });
+    var linhas = filtradas.map(function (l) { return linhaLancamento(l, l.contaApelido, contaSistemaPorId[l.contaId]); }).join("")
+      || '<tr><td colspan="8"><div class="empty-state">Nenhum lançamento com esses filtros.</div></td></tr>';
+
+    $("mainInner").innerHTML =
+      '<div class="card-head" style="border-bottom:none;padding-bottom:0;"><h2>Central de Lançamentos</h2>' +
+      '<div style="display:flex;gap:8px;"><button class="btn btn-sm" id="btnVincularTudo">🔗 Vincular tudo</button></div></div>' +
+      '<div class="card">' +
+      '<div class="card-head"><h2>Filtros</h2>' + (filtroAtivo ? '<button class="btn btn-ghost btn-sm" id="btnLimparFiltros">✕ Limpar filtros</button>' : "") + "</div>" +
+      '<div class="filtros-row">' +
+      '<div class="field"><label class="field-label">Conta</label><select class="plain-select" id="fConta">' + opcoesContas + "</select></div>" +
+      '<div class="field"><label class="field-label">Tipo</label><select class="plain-select" id="fTipo">' +
+      '<option value=""' + (!f.tipo ? " selected" : "") + '>Todos</option>' +
+      '<option value="C"' + (f.tipo === "C" ? " selected" : "") + '>Entradas</option>' +
+      '<option value="D"' + (f.tipo === "D" ? " selected" : "") + ">Saídas</option></select></div>" +
+      '<div class="field"><label class="field-label">De</label><input class="plain-input" id="fDe" type="date" value="' + escapeAttr(f.de) + '" /></div>' +
+      '<div class="field"><label class="field-label">Até</label><input class="plain-input" id="fAte" type="date" value="' + escapeAttr(f.ate) + '" /></div>' +
+      '<div class="field grow"><label class="field-label">Buscar no histórico</label><input class="plain-input" id="fBusca" placeholder="Ex: aluguel, sicoob..." value="' + escapeAttr(f.busca) + '" /></div>' +
+      '<div class="field" style="min-width:90px;"><label class="field-label">Valor mín.</label><input class="plain-input" id="fValorMin" placeholder="0,00" value="' + escapeAttr(f.valorMin) + '" /></div>' +
+      '<div class="field" style="min-width:90px;"><label class="field-label">Valor máx.</label><input class="plain-input" id="fValorMax" placeholder="0,00" value="' + escapeAttr(f.valorMax) + '" /></div>' +
+      "</div>" +
+      '<div class="filtros-row" style="border-top:1px solid var(--border);">' +
+      '<label class="check-inline"><input type="checkbox" id="fPendentes"' + (f.pendentes ? " checked" : "") + ' /> ⚠ Mostrar só pendentes (' + pendentesTotal + ")</label>" +
+      '<span style="flex:1;"></span>' +
+      '<button class="btn btn-ghost btn-sm" id="btnExportarExcel"' + (filtradas.length ? "" : " disabled") + '>⬇ Excel</button>' +
+      '<button class="btn btn-ghost btn-sm" id="btnExportarCsv"' + (filtradas.length ? "" : " disabled") + ">⬇ CSV</button>" +
+      '<button class="btn btn-ghost btn-sm" id="btnExportarTxt"' + (filtradas.length ? "" : " disabled") + ">⬇ TXT</button>" +
+      '<button class="btn btn-ghost btn-sm" id="btnLancarDominio"' + (filtradas.length ? "" : " disabled") + ' title="Manda esses lançamentos direto pro Domínio (robô na sua máquina). Para no Resumo dos Dados -- você confere e grava.">🚀 Lançar no Domínio</button>' +
+      "</div>" +
+      '<div class="hint-note" style="display:flex;justify-content:space-between;padding:10px 16px;">' +
+      "<span>" + filtradas.length + " de " + (CENTRAL_LINHAS || []).length + " lançamento(s)</span>" +
+      '<span>Total: <b class="mono">' + fmtBRL.format(somaTotal) + "</b></span></div>" +
+      '<div class="table-scroll"><table><thead><tr><th>Conta</th><th>Data</th><th>Débito</th><th>Crédito</th><th>Categoria</th><th>Histórico</th><th class="num">Valor</th><th class="ctr">—</th></tr></thead><tbody>' +
+      linhas + "</tbody></table></div>" +
+      "</div>";
+
+    $("btnVincularTudo").addEventListener("click", vincularTudo);
+    var limpar = $("btnLimparFiltros");
+    if (limpar) limpar.addEventListener("click", function () { CENTRAL_FILTROS = filtrosCentralVazios(); renderCentral(); });
+    ["fConta", "fTipo", "fPendentes"].forEach(function (id) {
+      $(id).addEventListener("change", function () {
+        f.contaId = $("fConta").value; f.tipo = $("fTipo").value; f.pendentes = $("fPendentes").checked;
+        renderCentral();
+      });
+    });
+    // Data: "change" dispara a cada segmento digitado (dia/mês/ano) nesse
+    // tipo de input, e como o handler re-renderiza a tela inteira, o campo
+    // perdia o foco no meio da digitação -- só atualiza no "blur" (quando o
+    // usuário clica fora / sai do campo), igual pediu o usuário.
+    ["fDe", "fAte"].forEach(function (id) {
+      $(id).addEventListener("blur", function () {
+        var novoDe = $("fDe").value, novoAte = $("fAte").value;
+        if (novoDe === f.de && novoAte === f.ate) return;
+        f.de = novoDe; f.ate = novoAte;
+        renderCentral();
+      });
+    });
+    [["fBusca", "busca"], ["fValorMin", "valorMin"], ["fValorMax", "valorMax"]].forEach(function (par) {
+      var el = $(par[0]);
+      el.addEventListener("input", function () {
+        f[par[1]] = el.value;
+        clearTimeout(el._t);
+        el._t = setTimeout(renderCentral, 250);
+      });
+    });
+    var btnExcel = $("btnExportarExcel"); if (btnExcel) btnExcel.addEventListener("click", function () { exportarCentralLancamentos("/exportar/xlsx", "xlsx"); });
+    var btnCsv = $("btnExportarCsv"); if (btnCsv) btnCsv.addEventListener("click", function () { exportarCentralLancamentos("/exportar/csv", "csv"); });
+    var btnTxt = $("btnExportarTxt"); if (btnTxt) btnTxt.addEventListener("click", function () { exportarCentralLancamentos("/exportar/txt", "txt"); });
+    var btnDom = $("btnLancarDominio"); if (btnDom) btnDom.addEventListener("click", function () { exportarCentralLancamentos("/exportar/txt", "txt", true); });
+    var mapaOnde = {}, porLancamento = {};
+    filtradas.forEach(function (l) { mapaOnde[l.id] = { contaId: l.contaId, ano: l.ano, mes: l.mes }; porLancamento[l.id] = l; });
+    ligarBotoesVinculo(mapaOnde);
+    ligarBotoesCriarRegra(porLancamento);
+    document.querySelectorAll("[data-comprovante]").forEach(function (b) {
+      b.addEventListener("click", function () { var c = COMP_VINC[b.getAttribute("data-comprovante")]; if (c) ComprovantesVinculo.abrirDetalhe(c); });
+    });
+  }
+
+  /* =========================================================
+     REGRAS DE CONTA CONTÁBIL -- página cheia (empresa inteira), copiada
+     ponto a ponto do Conversor de Extratos (React): mesma linha de
+     estatística, mesma pílula de abas, mesmo filtro de banco + busca,
+     mesmas colunas da tabela.
+     ========================================================= */
+  var MODOS_REGRA = [["contem", "contém"], ["comeca", "começa com"], ["termina", "termina com"], ["exato", "é exatamente"], ["regex", "regex"]];
+
+  function carregarRegras() {
+    secao = "regras";
+    setLargura(true);
+    $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Carregando regras…</div></div>';
+    Promise.all([
+      api("/cuff-bancaria/empresas/" + empresaId + "/regras"),
+      api("/cuff-bancaria/empresas/" + empresaId + "/central"),
+    ]).then(function (r) {
+      REGRAS = r[0];
+      CENTRAL_LINHAS = r[1];
+      renderRegras();
+    }).catch(function (err) {
+      $("mainInner").innerHTML = '<div class="card"><div class="loading-inline">Erro: ' + escapeHtml(err.message) + "</div></div>";
+    });
+  }
+
+  function renderRegras() {
+    var usos = calcularUsosPorRegra();
+    var abas = [["D", "Saídas"], ["C", "Entradas"], ["", "Ambas"]];
+    var tabsHtml = abas.map(function (a) {
+      return '<button class="tab-btn' + (REGRAS_TAB === a[0] ? " active" : "") + '" data-regra-tab="' + a[0] + '">' + a[1] + "</button>";
+    }).join("");
+
+    var regrasDoBanco = REGRAS_BANCO_FILTRO === "todos" ? REGRAS : REGRAS.filter(function (r) { return !r.contaId || r.contaId === REGRAS_BANCO_FILTRO; });
+    var buscaNorm = REGRAS_BUSCA.trim().toUpperCase();
+    var visiveis = regrasDoBanco
+      .filter(function (r) { return r.tipo === REGRAS_TAB; })
+      .filter(function (r) {
+        if (!buscaNorm) return true;
+        return (r.texto || "").toUpperCase().indexOf(buscaNorm) !== -1 || (r.categoriaPropria || "").toUpperCase().indexOf(buscaNorm) !== -1;
+      })
+      .sort(function (a, b) { return a.ordem - b.ordem; });
+
+    var linhas = visiveis.map(function (r, idx) {
+      var nomeConta = r.contaId ? ((CONTAS.filter(function (c) { return c.id === r.contaId; })[0] || {}).apelido || "Conta removida") : null;
+      return "<tr>" +
+        '<td class="ctr" style="color:var(--faint);cursor:grab;">⋮⋮</td>' +
+        '<td class="ctr"><input type="checkbox" data-toggle-regra="' + escapeAttr(r.id) + '"' + (r.ativa ? " checked" : "") + " /></td>" +
+        '<td data-editar-regra="' + escapeAttr(r.id) + '" title="Duplo clique pra editar" style="cursor:pointer;">' + escapeHtml(r.texto) + "</td>" +
+        '<td data-editar-regra="' + escapeAttr(r.id) + '" title="Duplo clique pra editar" style="cursor:pointer;">' +
+          (r.historicoPadrao ? escapeHtml(r.historicoPadrao) : '<span style="color:var(--muted);">—</span>') + "</td>" +
+        '<td data-editar-regra="' + escapeAttr(r.id) + '" title="Duplo clique pra editar" style="cursor:pointer;">' +
+          (nomeConta ? escapeHtml(nomeConta) : '<span class="badge badge-muted">Todos</span>') + "</td>" +
+        '<td data-editar-regra="' + escapeAttr(r.id) + '" title="Duplo clique pra editar" style="cursor:pointer;">' + escapeHtml(r.categoriaPropria || "—") + "</td>" +
+        '<td class="num mono">' + (usos[r.id] || 0) + "</td>" +
+        '<td class="ctr">' +
+          '<button class="icon-btn" data-mover-regra="' + escapeAttr(r.id) + '" data-dir="up" title="Subir prioridade"' + (idx === 0 ? " disabled" : "") + ">↑</button>" +
+          '<button class="icon-btn" data-mover-regra="' + escapeAttr(r.id) + '" data-dir="down" title="Descer prioridade"' + (idx === visiveis.length - 1 ? " disabled" : "") + ">↓</button>" +
+          '<button class="icon-btn" data-del-regra="' + escapeAttr(r.id) + '" title="Remover">🗑</button>' +
+        "</td></tr>";
+    }).join("") || '<tr><td colspan="8"><div class="empty-state">Nenhuma regra nessa aba ainda.</div></td></tr>';
+
+    var totalUsosBanco = regrasDoBanco.reduce(function (soma, r) { return soma + (usos[r.id] || 0); }, 0);
+    var contasOpcoesFiltro = CONTAS.map(function (c) {
+      return '<option value="' + c.id + '"' + (REGRAS_BANCO_FILTRO === c.id ? " selected" : "") + ">Vale pra " + escapeHtml(c.apelido) + "</option>";
+    }).join("");
+
+    $("mainInner").innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;">' +
+        '<div><h2 style="margin:2px 0 0;font-size:26px;font-weight:600;letter-spacing:-0.65px;line-height:1.2;">Regras contábeis</h2>' +
+        '<p class="hint-note" style="margin:4px 0 0;">Contrapartida automática · ' + escapeHtml(empresaNome) + "</p></div>" +
+        '<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:14px;color:var(--hint);">' +
+          '<span><strong style="color:var(--ink);">' + regrasDoBanco.length + "</strong> regras</span>" +
+          '<span><strong style="color:var(--ok);">' + regrasDoBanco.filter(function (r) { return r.ativa; }).length + "</strong> ativas</span>" +
+          '<span><strong style="color:var(--ink);">' + totalUsosBanco + "</strong> usos nos lançamentos</span>" +
+        "</div>" +
+      "</div>" +
+      '<div class="card" style="margin-top:14px;">' +
+        '<div class="card-head" style="flex-wrap:wrap;gap:8px;">' +
+        '<div class="tab-bar">' + tabsHtml + "</div>" +
+        '<span style="flex:1;"></span>' +
+        '<button class="btn btn-ghost btn-sm" id="btnExportarRegras">⬇ Exportar</button>' +
+        '<label class="btn btn-ghost btn-sm" style="cursor:pointer;">⬆ Importar<input type="file" accept="application/json" id="inputImportarRegras" style="display:none;" /></label>' +
+        '<button class="btn btn-primary btn-sm" id="btnNovaRegra">+ Nova regra</button>' +
+        "</div>" +
+        '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--border);">' +
+          '<select class="plain-select" id="regrasFiltroBanco"><option value="todos">Todas as regras</option>' + contasOpcoesFiltro + "</select>" +
+          '<input class="plain-input" id="regrasBusca" style="flex:1;min-width:200px;" placeholder="Buscar por histórico ou categoria..." value="' + escapeAttr(REGRAS_BUSCA) + '" />' +
+        "</div>" +
+      "</div>" +
+      '<div class="card" style="margin-top:14px;">' +
+        '<div class="table-scroll"><table><thead><tr><th class="ctr"></th><th class="ctr"></th><th>Histórico</th><th>Histórico padrão</th><th>Banco</th><th>Categoria</th><th class="num">Usos</th><th class="ctr"></th></tr></thead><tbody>' + linhas + "</tbody></table></div>" +
+      "</div>";
+
+    document.querySelectorAll("[data-regra-tab]").forEach(function (btn) {
+      btn.addEventListener("click", function () { REGRAS_TAB = btn.getAttribute("data-regra-tab"); renderRegras(); });
+    });
+    document.querySelectorAll("[data-toggle-regra]").forEach(function (chk) {
+      chk.addEventListener("change", function () {
+        var id = chk.getAttribute("data-toggle-regra");
+        salvarRegrasCuff(REGRAS.map(function (r) { return r.id === id ? Object.assign({}, r, { ativa: chk.checked }) : r; }), true).then(function () { renderRegras(); });
+      });
+    });
+    document.querySelectorAll("[data-mover-regra]").forEach(function (btn) {
+      btn.addEventListener("click", function () { moverRegra(btn.getAttribute("data-mover-regra"), btn.getAttribute("data-dir")); });
+    });
+    document.querySelectorAll("[data-del-regra]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (!confirm("Remover essa regra?")) return;
+        salvarRegrasCuff(REGRAS.filter(function (r) { return r.id !== btn.getAttribute("data-del-regra"); }), true).then(function () { renderRegras(); });
+      });
+    });
+    $("regrasFiltroBanco").addEventListener("change", function () { REGRAS_BANCO_FILTRO = this.value; renderRegras(); });
+    $("regrasBusca").addEventListener("input", function () {
+      REGRAS_BUSCA = this.value;
+      var posCursor = this.selectionStart;
+      renderRegras();
+      var novoInput = $("regrasBusca");
+      novoInput.focus();
+      novoInput.setSelectionRange(posCursor, posCursor);
+    });
+    document.querySelectorAll("[data-editar-regra]").forEach(function (td) {
+      td.addEventListener("dblclick", function () {
+        var r = REGRAS.filter(function (x) { return x.id === td.getAttribute("data-editar-regra"); })[0];
+        if (r) abrirModalRegra(r);
+      });
+    });
+    $("btnNovaRegra").addEventListener("click", function () { abrirModalRegra(null); });
+    $("btnExportarRegras").addEventListener("click", exportarRegrasJson);
+    $("inputImportarRegras").addEventListener("change", function (ev) { importarRegrasJson(ev.target.files[0]); });
+  }
+
+  /* =========================================================
+     CONFIGURAÇÕES
+     ========================================================= */
+  function renderConfiguracoes() {
+    secao = "config";
+    setLargura(false);
+    var HORAS_LABEL = { "": "Desligado (só manual)", "1": "A cada 1h", "3": "A cada 3h", "6": "A cada 6h", "12": "A cada 12h", "24": "A cada 24h" };
+    var linhasAuto = CONTAS.map(function (c) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">' +
+        '<div><div style="font-weight:700;font-size:13px;">' + escapeHtml(c.apelido) + "</div>" +
+        '<div class="hint-note">' + (c.blingUltimoResultado ? escapeHtml(c.blingUltimoResultado) : "Ainda não tentou nenhuma busca automática.") + "</div></div>" +
+        '<select class="plain-select" style="max-width:200px;" data-auto-horas-cfg="' + escapeAttr(c.id) + '">' +
+        Object.keys(HORAS_LABEL).map(function (h) { return '<option value="' + h + '"' + (String(c.blingAutoHoras || "") === h ? " selected" : "") + ">" + HORAS_LABEL[h] + "</option>"; }).join("") +
+        "</select></div>";
+    }).join("") || '<p class="hint-note">Nenhuma conta cadastrada ainda.</p>';
+
+    $("mainInner").innerHTML =
+      '<div class="card-head" style="border-bottom:none;padding-bottom:0;"><h2>Configurações</h2></div>' +
+      '<div class="card"><div class="card-head"><h2>Busca automática — Bling</h2></div><div class="card-body">' + linhasAuto + "</div></div>" +
+      '<div class="card"><div class="card-head"><h2>Formatação de texto</h2></div><div class="card-body">' +
+      '<p class="hint-note" style="margin-bottom:14px;">Vale pra Categoria/Histórico (Central de Lançamentos, extrato) e pro histórico exportado.</p>' +
+      '<label class="check-inline" style="margin-bottom:10px;"><input type="checkbox" id="cfgMaiusculo"' + (CONFIG_TEXTO.maiusculo ? " checked" : "") + " /> Deixar tudo maiúsculo</label><br>" +
+      '<label class="check-inline"><input type="checkbox" id="cfgSemEspeciais"' + (CONFIG_TEXTO.semEspeciais ? " checked" : "") + " /> Remover caracteres especiais</label>" +
+      "</div></div>" +
+      '<div class="card"><div class="card-body">' +
+      '<p style="font-weight:600;margin:0 0 4px;">Contas bancárias</p>' +
+      '<p class="hint-note" style="margin:0 0 12px;">Escolhe quais contas do Bling (Caixas e Bancos) essa empresa acompanha, o apelido, a conta no sistema e a conta saldo credor de cada uma.</p>' +
+      '<button class="btn btn-primary" id="btnGerenciarContasCfg">⚙ Gerenciar contas</button>' +
+      "</div></div>";
+
+    $("btnGerenciarContasCfg").addEventListener("click", abrirGerenciarContas);
+    document.querySelectorAll("[data-auto-horas-cfg]").forEach(function (sel) {
+      sel.addEventListener("change", function () {
+        var id = sel.getAttribute("data-auto-horas-cfg");
+        api("/cuff-bancaria/empresas/" + empresaId + "/contas/" + id, {
+          method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ blingAutoHoras: sel.value || null }),
+        }).then(function (contas) {
+          CONTAS = contas;
+          showToast("Busca automática atualizada.");
+        }).catch(function (err) { showToast("Não deu pra salvar: " + err.message); });
+      });
+    });
+    $("cfgMaiusculo").addEventListener("change", function () { CONFIG_TEXTO.maiusculo = this.checked; salvarConfigTexto(); showToast("Formatação salva."); });
+    $("cfgSemEspeciais").addEventListener("change", function () { CONFIG_TEXTO.semEspeciais = this.checked; salvarConfigTexto(); showToast("Formatação salva."); });
+  }
+
+  iniciar();
+}
+appMain();
+</script>

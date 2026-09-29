@@ -1,0 +1,12 @@
+Conta contábil (Cód Domínio) na regra da Conciliação CUFF
+
+Arquivos alterados:
+- index.html       -> tela CUFF (modal, lista de regras, lançamentos, exportação)
+- cuffBancaria.ts  -> rota do servidor (aplicarRegras e PUT /regras)
+
+Tambem necessario (nao enviado): server/src/domain/cuffBancariaTypes.ts
+  RegraCuff:     contaContabil?: string
+  LancamentoCuff: contaContabil?: string | null
+Conferir tambem server/src/storage/cuffBancariaRepository.ts (nao pode filtrar campos).
+
+Os arquivos *.original.* sao as versoes antes da alteracao.
