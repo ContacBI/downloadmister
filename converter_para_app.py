@@ -33,7 +33,8 @@ import unicodedata
 import uuid
 
 TIPO_DOC = "extrato_bancario"
-BANCOS = [  # (trecho do nome no Mister, sem acento e minúsculo) -> (id do app, nome no app)
+BANCOS = [  # (nome no Mister, sem acento e minúsculo) -> (id do app, nome no app)
+    # os ids seguem os nomes dos modelos da pasta modelos/ (ex.: sicoob_m1__extrato_bancario.png)
     ("banco do brasil", ("banco_do_brasil", "Banco do Brasil")),
     ("bradesco", ("bradesco", "Bradesco")),
     ("inter", ("inter", "Banco Inter")),
@@ -43,6 +44,25 @@ BANCOS = [  # (trecho do nome no Mister, sem acento e minúsculo) -> (id do app,
     ("olist", ("olist", "Olist (Celcoin)")),
     ("santander", ("santander", "Santander")),
     ("sicredi", ("sicredi", "Sicredi")),
+    ("sicoob", ("sicoob", "Sicoob")),
+    ("cred crea", ("credcrea", "Cred Crea")),
+    ("credcrea", ("credcrea", "Cred Crea")),
+    ("itau", ("itau", "Itaú")),
+    ("caixa", ("caixa", "Caixa Econômica Federal")),
+    ("c6", ("c6", "Banco C6")),
+    ("sofisa", ("sofisa", "Banco Sofisa")),
+    ("safra", ("safra", "Banco Safra")),
+    ("stone", ("stone", "Stone")),
+    ("cora", ("cora", "Cora")),
+    ("cresol", ("cresol", "Cresol")),
+    ("daycoval", ("daycoval", "Daycoval")),
+    ("infinitepay", ("infinitypay", "InfinitePay")),
+    ("infinity pay", ("infinitypay", "InfinitePay")),
+    ("pagbank", ("pagbank", "PagBank")),
+    ("pagseguro", ("pagbank", "PagBank")),
+    ("sisprime", ("sisprime", "Sisprime")),
+    ("xp investimentos", ("xp", "XP")),
+    ("banco xp", ("xp", "XP")),
 ]
 SEM_BANCO = ("planilha_excel", "Planilha Excel (modelo próprio)")
 
@@ -75,7 +95,7 @@ def banco_do_app(nome_mister, tabela):
     if n in tabela:
         return tabela[n]
     for trecho, destino in BANCOS:
-        if trecho in n:
+        if re.search(r"\b" + re.escape(trecho) + r"\b", n):
             return destino
     return None
 
