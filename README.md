@@ -25,3 +25,27 @@ Para parar antes: no Console, `window.__mrParar = true`. O que já foi baixado �
 - Faz uma pausa curta entre as chamadas e tenta de novo se o servidor pedir.
 - Se o acesso expirar no meio, faça login de novo e rode outra vez.
 - Não guarde token nem senha neste repositório.
+
+## Estrutura das pastas
+
+| Pasta | O que é |
+|---|---|
+| `arquivos/` | Caixa de entrada: suba aqui qualquer arquivo novo para eu ler. |
+| `dados/mister/` | O que foi baixado do Mister (ZIP e `todas-as-regras.json`). |
+| `dados/app-existentes/` | JSONs das empresas que já estão no app (com lançamentos). |
+| `dados/numeros.csv` | `cnpj;numero`: número de cada empresa no app. Preencha os que estão em branco. |
+| `dados/bancos.csv` | Banco do Mister -> id do banco no app. Preencha os que estão em branco. |
+| `saida/novas/` | JSONs de empresas novas, prontos para copiar para a pasta `empresas` do app. |
+| `saida/atualizadas/` | Empresas que já existiam: mesmo nome de arquivo, regras acrescentadas, lançamentos preservados. |
+| `saida/relatorio-conversao.csv` | O que precisa de atenção em cada empresa. |
+
+## Converter as regras do Mister para o app
+
+```
+python3 converter_para_app.py dados/mister/todas-as-regras.json saida \
+  --existentes dados/app-existentes --numeros dados/numeros.csv --bancos dados/bancos.csv
+```
+
+- D no Mister vira PAGAMENTO e C vira RECEBIMENTO; a conta é o código contábil da regra.
+- Regras do tipo BENEFICIARIO viram "histórico contém o nome" (use `--beneficiario ignorar` para descartá-las).
+- Faça uma cópia da pasta `empresas` do app antes de copiar qualquer arquivo de `saida/`.

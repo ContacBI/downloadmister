@@ -1,0 +1,294 @@
+{
+  "id": "ed658a9f-8d8a-4680-bf50-22c54054acd3",
+  "numero": "",
+  "cnpj": "41578457000165",
+  "nome": "TRUCK BRASIL - PECAS E SERVICOS DE VEICULOS AUTOMOTORES LTDA",
+  "contasBancarias": [
+    {
+      "id": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "planilha_excel",
+      "bancoNome": "Planilha Excel (modelo próprio)",
+      "contaBanco": "38862-9",
+      "contaSistema": "11"
+    }
+  ],
+  "regras": [
+    {
+      "id": "id-mumxkz7g-ki2t52ek",
+      "ativo": true,
+      "historico": "IOF",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-5hkd8t6m",
+      "ativo": true,
+      "historico": "JUROS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2914",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-r4nxah7v",
+      "ativo": true,
+      "historico": "TARIFA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-6c6be21i",
+      "ativo": true,
+      "historico": "TAXA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-aa8k0vno",
+      "ativo": true,
+      "historico": "CHEQUE COMP",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "5",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-lft1480z",
+      "ativo": true,
+      "historico": "PIX TRANSF PAGADOR",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-uxl6wbhy",
+      "ativo": true,
+      "historico": "PGT.FATURA CARTAO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2790",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-nkwje5mg",
+      "ativo": true,
+      "historico": "DB. ICATU SEGUROS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2730",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-iq455k1b",
+      "ativo": true,
+      "historico": "LIQ.COB. REG.",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "5",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-qad31s91",
+      "ativo": true,
+      "historico": "JOAQUIM ANTONIO RODRIGUES",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "402",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-m4efr6do",
+      "ativo": true,
+      "historico": "IMOBILIARIA VENEZA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2712",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-4tg3dz2t",
+      "ativo": true,
+      "historico": "TAR PCT SERV PJ",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-zr6ve1bh",
+      "ativo": true,
+      "historico": "SANEPAR LUCIANO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "402",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-p8w0b0bw",
+      "ativo": true,
+      "historico": "LUCIANO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "402",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-6umftzkh",
+      "ativo": true,
+      "historico": "CONTACPREV ASSESSORIA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2721",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-knks8962",
+      "ativo": true,
+      "historico": "DEB.PGTO.PARC.BNDES",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "5",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-snszwget",
+      "ativo": true,
+      "historico": "TAR.DEVOL.CHQ.",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-1b43ve8q",
+      "ativo": true,
+      "historico": "TAR.DEVOL. CHEQUE",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-6bjdt593",
+      "ativo": true,
+      "historico": "ADEMICON ADM DE CONSORCIO S A",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "882",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-hpaw0yvf",
+      "ativo": true,
+      "historico": "CREDITO PIX - REFORBENS - PECAS E SERVICOS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "604",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-0nnljewc",
+      "ativo": true,
+      "historico": "CRED.COBR.CE",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-e9oeuknh",
+      "ativo": true,
+      "historico": "BAIXA BOLETO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "5",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-z3rsww8p",
+      "ativo": true,
+      "historico": "ADEMICON",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "882",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-ea3di5yh",
+      "ativo": true,
+      "historico": "ADIANT.DEPOSITANTE",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "5",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz7g-jvu1o6bx",
+      "ativo": true,
+      "historico": "CHQ.DEVOL",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "defbcc46-e0c8-43d8-8ef9-a8658b853763",
+      "valor": null
+    }
+  ],
+  "lancamentos": []
+}

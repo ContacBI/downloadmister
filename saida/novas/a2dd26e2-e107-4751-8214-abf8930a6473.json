@@ -1,0 +1,327 @@
+{
+  "id": "a2dd26e2-e107-4751-8214-abf8930a6473",
+  "numero": "",
+  "cnpj": "51899993000116",
+  "nome": "TC INDUSTRIA E COMERCIO DE METAIS LTDA",
+  "contasBancarias": [
+    {
+      "id": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "sicredi",
+      "bancoNome": "Sicredi",
+      "contaBanco": "57998-9",
+      "contaSistema": "11"
+    }
+  ],
+  "regras": [
+    {
+      "id": "id-mumxkz8j-dpfiv8ll",
+      "ativo": true,
+      "historico": "GETNET ANTECIP MASTER",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-cx9npiy2",
+      "ativo": true,
+      "historico": "GETNET DEBITO ELO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-uoprys9h",
+      "ativo": true,
+      "historico": "GETNET ANTECIP ELO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-b0t01e2p",
+      "ativo": true,
+      "historico": "TARIFA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-9mx0e0al",
+      "ativo": true,
+      "historico": "GETNET ANTECIPACAO VISA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "2913",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-9knivhs0",
+      "ativo": true,
+      "historico": "LIQ.COBRANCA SIMPLES",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-1vf95m4z",
+      "ativo": true,
+      "historico": "SERCOMTEL",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2703",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-m9fcbkba",
+      "ativo": true,
+      "historico": "CONTACPREV",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4661",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-hich0zh8",
+      "ativo": true,
+      "historico": "RECEBIMENTO PIX",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-69pwyeto",
+      "ativo": true,
+      "historico": "HELLIAN KELLI",
+      "historicoPadrao": "TRANSFERENCIA HELLIAN KELLI",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "781",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-ryh7nef2",
+      "ativo": true,
+      "historico": "JEFER PRODUTOS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4732",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-bf19puoo",
+      "ativo": true,
+      "historico": "UNIMED DE LONDR",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4686",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-45v2zj72",
+      "ativo": true,
+      "historico": "CESTA DE RELACIONAMENTO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-eugea4dg",
+      "ativo": true,
+      "historico": "MANUTENCAO DE TITULOS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-jm18dp9l",
+      "ativo": true,
+      "historico": "GETNET DEBITO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-829omcpt",
+      "ativo": true,
+      "historico": "LCHUBB SEGUROS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2730",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-0bokd991",
+      "ativo": true,
+      "historico": "CHUBB SEGUROS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2730",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-mh1fvcvo",
+      "ativo": true,
+      "historico": "DRIBION SOFTWAR",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2739",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-99w1kcmh",
+      "ativo": true,
+      "historico": "ECS COMERCIAL",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2733",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-n86i684q",
+      "ativo": true,
+      "historico": "GVR ADMINISTRAC",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2712",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-wn1fhdqy",
+      "ativo": true,
+      "historico": "SERRALHERIA TUC",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4828",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-an5zg3fz",
+      "ativo": true,
+      "historico": "JOCEC PRODUTOS",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4829",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-gnohado3",
+      "ativo": true,
+      "historico": "STAM METALURGIC",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4846",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-6hlmn73h",
+      "ativo": true,
+      "historico": "L DE S MOLINA A",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4845",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-0z2aqius",
+      "ativo": true,
+      "historico": "MONTANA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4847",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-a7z8evgu",
+      "ativo": true,
+      "historico": "BWT COMERCIO",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2759",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-25q6v8k0",
+      "ativo": true,
+      "historico": "JEFER BANKING F",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "4733",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8j-h60ffqfm",
+      "ativo": true,
+      "historico": "FLUXO ASSESSORIA",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2791",
+      "contaId": "e0a4fd0e-af41-40c1-9931-c9ceb09f0102",
+      "valor": null
+    }
+  ],
+  "lancamentos": []
+}

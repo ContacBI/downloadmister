@@ -1,0 +1,288 @@
+{
+  "id": "4e7256c4-9c5a-4a03-8af9-e5f93c31aada",
+  "numero": "",
+  "cnpj": "07326871000220",
+  "nome": "MICROMEDICAL IMPLANTES DO BRASIL LTDA",
+  "contasBancarias": [
+    {
+      "id": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "planilha_excel",
+      "bancoNome": "Planilha Excel (modelo próprio)",
+      "contaBanco": "000913442-7",
+      "contaSistema": "12"
+    },
+    {
+      "id": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "banco_do_brasil",
+      "bancoNome": "Banco do Brasil",
+      "contaBanco": "10292-X",
+      "contaSistema": "21"
+    },
+    {
+      "id": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "tipoDocumento": "extrato_bancario",
+      "bancoId": "banco_do_brasil",
+      "bancoNome": "Banco do Brasil",
+      "contaBanco": "16507-7",
+      "contaSistema": "22"
+    }
+  ],
+  "regras": [
+    {
+      "id": "id-mumxkz8f-xcu13zaz",
+      "ativo": true,
+      "historico": "MICROMEDICAL IMPLANTES DO BRASIL",
+      "historicoPadrao": "MICROMEDICAL IMPLANTES DO BRASIL",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5576",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-aoi4fs86",
+      "ativo": true,
+      "historico": "TAR TITULOS",
+      "historicoPadrao": "TAR TITULOS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-klg2n93b",
+      "ativo": true,
+      "historico": "00073 TITULO LIQUIDADO 0000000",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "5576",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-ptsn88y6",
+      "ativo": true,
+      "historico": "TARIFA DE COBRANÇA",
+      "historicoPadrao": "TARIFA DE COBRANÇA",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-yjqpslxa",
+      "ativo": true,
+      "historico": "TAR DEV TITULO",
+      "historicoPadrao": "TAR DEV TITULO",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-rztc84o0",
+      "ativo": true,
+      "historico": "TAR COB TITULOS",
+      "historicoPadrao": "TAR COB TITULOS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-oz9l0m7s",
+      "ativo": true,
+      "historico": "TARIFA S/ EMIS DE TED",
+      "historicoPadrao": "TARIFA S/ EMIS DE TED",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-8p7v90su",
+      "ativo": true,
+      "historico": "TARIFA DE CONTA ATIVA",
+      "historicoPadrao": "TARIFA DE CONTA ATIVA",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "d1866625-f58b-4bcd-a4b9-da175cc3a5be",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-bpyaw8wq",
+      "ativo": true,
+      "historico": "BB RENDE FÁCIL - RENDE FACIL",
+      "historicoPadrao": "",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "57",
+      "contaId": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-7196jltx",
+      "ativo": true,
+      "historico": "BB RENDE FÁCIL - RENDE FACIL",
+      "historicoPadrao": "BB RENDE FÁCIL - RENDE FACIL",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "57",
+      "contaId": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-hsykq25u",
+      "ativo": true,
+      "historico": "PAGTO CARTÃO CRÉDITO",
+      "historicoPadrao": "PAGTO CARTÃO CRÉDITO",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "5347",
+      "contaId": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-k1r9pxgj",
+      "ativo": true,
+      "historico": "TARIFA PACOTE DE SERVIÇOS",
+      "historicoPadrao": "TARIFA PACOTE DE SERVIÇOS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-zgt6cqm5",
+      "ativo": true,
+      "historico": "PIX - RECEBIDO - 16/01 16:49 34539000000186 KLINI PLANO",
+      "historicoPadrao": "PIX - RECEBIDO - 16/01 16:49 34539000000186 KLINI PLANO",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "3304",
+      "contaId": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-vea4bjyo",
+      "ativo": true,
+      "historico": "KLINI PLANO",
+      "historicoPadrao": "KLINI PLANO",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "3304",
+      "contaId": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-7qr9mspi",
+      "ativo": true,
+      "historico": "CABERJ INTEGRA",
+      "historicoPadrao": "CABERJ INTEGRA",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "3453",
+      "contaId": "7d8847f6-295d-4fdb-9f2f-9e00d9eb4c41",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-3wsdb84m",
+      "ativo": true,
+      "historico": "BB RENDE FÁCIL - RENDE FACIL",
+      "historicoPadrao": "BB RENDE FÁCIL - RENDE FACIL",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "56",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-7kqb8pen",
+      "ativo": true,
+      "historico": "BB RENDE FÁCIL - RENDE FACIL",
+      "historicoPadrao": "BB RENDE FÁCIL - RENDE FACIL",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "56",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-vfl1480s",
+      "ativo": true,
+      "historico": "TARIFA LIQ CBR VINCULADA - TAR. AGRUPADAS",
+      "historicoPadrao": "TARIFA LIQ CBR VINCULADA - TAR. AGRUPADAS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-on7fjxmr",
+      "ativo": true,
+      "historico": "TARIFA INSTR CBR COM REG - TAR. AGRUPADAS",
+      "historicoPadrao": "TARIFA INSTR CBR COM REG - TAR. AGRUPADAS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-l6po2sza",
+      "ativo": true,
+      "historico": "TARIFA BAIXA DE TÍTULO - TAR. AGRUPADAS",
+      "historicoPadrao": "TARIFA BAIXA DE TÍTULO - TAR. AGRUPADAS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-2bmcp05l",
+      "ativo": true,
+      "historico": "TARIFA LIQUID CBR COM REG - TAR. AGRUPADAS",
+      "historicoPadrao": "TARIFA LIQUID CBR COM REG - TAR. AGRUPADAS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-q83kv6y3",
+      "ativo": true,
+      "historico": "TARIFA PIX ENVIADO - TAR. AGRUPADAS",
+      "historicoPadrao": "TARIFA PIX ENVIADO - TAR. AGRUPADAS",
+      "modo": "CONTEM",
+      "natureza": "PAGAMENTO",
+      "conta": "2913",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    },
+    {
+      "id": "id-mumxkz8f-e61ph5yy",
+      "ativo": true,
+      "historico": "TED-PAG FORNECEDORES - 237 3369 31925548000176 GRUPO HOSPITAL",
+      "historicoPadrao": "TED-PAG FORNECEDORES - 237 3369 31925548000176 GRUPO HOSPITAL",
+      "modo": "CONTEM",
+      "natureza": "RECEBIMENTO",
+      "conta": "3286",
+      "contaId": "bc790bf4-a178-4483-b495-4a0c09490bd9",
+      "valor": null
+    }
+  ],
+  "lancamentos": []
+}
