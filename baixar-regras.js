@@ -70,34 +70,12 @@
   }
 
   // ---- 2. lista de empresas ----
-  let ids = [];
-  const resposta = prompt("IDs das empresas separados por vírgula (ex.: 9,12,15).\nDeixe vazio para tentar buscar todas.\nDica: teste primeiro só com o 9.", "9");
-  if (resposta === null) return;
-  if (resposta.trim()) {
-    ids = resposta.split(",").map((s) => s.trim()).filter(Boolean);
-  } else {
-    for (const path of ["/parceiros?size=1000&sort=id,asc", "/parceiros?size=1000", "/parceiros"]) {
-      try {
-        const { data } = await get(path);
-        if (Array.isArray(data) && data.length && data[0].parCnpjcpf) {
-          ids = data.map((p) => String(p.id));
-          console.log(`Lista de empresas obtida em ${path}: ${ids.length} empresas.`);
-          break;
-        }
-      } catch (e) { if (e.fatal) throw e; }
-    }
-    if (!ids.length) {
-      console.error("Não consegui listar as empresas sozinho. Rode de novo e informe os IDs.");
-      return;
-    }
-  }
-
-  // ---- 3. baixa as regras de cada empresa ----
-  async function paginar(id, size, parouCurto) {
+  // paginação genérica: a mesma lógica serve para empresas e regras
+  async function paginar(montarPath, size, parouCurto) {
     const todas = [], vistos = new Set();
     let total = null;
     for (let page = 0; ; page++) {
-      const { data, total: t } = await get(`/regras?page=${page}&size=${size}&parceiroId.equals=${id}&sort=id,asc`);
+      const { data, total: t } = await get(montarPath(page, size));
       if (t !== null) total = Number(t);
       if (!Array.isArray(data) || !data.length) break;
       const novas = data.filter((r) => !vistos.has(r.id));
@@ -109,12 +87,37 @@
     return { todas, total };
   }
 
-  async function regrasDaEmpresa(id) {
-    let res = await paginar(id, PAGE_SIZE, true);
-    // se o servidor limitou o tamanho da página, refaz de 20 em 20
-    if ((res.total !== null && res.todas.length < res.total) || (res.total === null && res.todas.length === 20)) {
-      res = await paginar(id, 20, false);
+  // tenta com página grande; se o servidor limitar o tamanho, refaz com o tamanho menor
+  async function paginarTudo(montarPath, pequeno) {
+    let res = await paginar(montarPath, PAGE_SIZE, true);
+    // sem o total do servidor não dá para saber se a página foi cortada: confere com o tamanho pequeno
+    if (res.total !== null ? res.todas.length < res.total : true) {
+      const conferido = await paginar(montarPath, pequeno, false);
+      if (conferido.todas.length > res.todas.length) res = { ...conferido, total: res.total };
     }
+    return res;
+  }
+
+  let ids = [];
+  const resposta = prompt("IDs das empresas separados por vírgula (ex.: 9,12,15).\nDeixe vazio para baixar TODAS as empresas ativas.\nDica: teste primeiro só com o 9.", "9");
+  if (resposta === null) return;
+  if (resposta.trim()) {
+    ids = resposta.split(",").map((x) => x.trim()).filter(Boolean);
+  } else {
+    const { todas, total } = await paginarTudo(
+      (page, size) => `/parceiros?page=${page}&size=${size}&enabled.equals=true&sort=id,asc`, 9);
+    ids = todas.map((e) => String(e.id));
+    console.log(`Empresas ativas encontradas: ${ids.length}${total !== null ? ` (o sistema informa ${total})` : ""}`);
+    if (!ids.length) {
+      console.error("Não consegui listar as empresas. Rode de novo e informe os IDs.");
+      return;
+    }
+  }
+
+  // ---- 3. baixa as regras de cada empresa ----
+  async function regrasDaEmpresa(id) {
+    const res = await paginarTudo(
+      (page, size) => `/regras?page=${page}&size=${size}&parceiroId.equals=${id}&sort=id,asc`, 20);
     if (res.total !== null && res.todas.length !== res.total) {
       console.warn(`  Atenção: empresa ${id} veio com ${res.todas.length} de ${res.total} regras.`);
     }
