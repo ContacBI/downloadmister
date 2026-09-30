@@ -3,12 +3,13 @@
 """
 Gravador de tela para o extrator de regras do Dominio.
 
-Em vez de gravar um video (que comprime e borra o texto), ele tira "fotos" da tela inteira e guarda so as
-que MUDARAM e estao PARADAS (quando voce para de rolar a lista). Ao terminar, chama o extrator.
+Em vez de gravar um video (que comprime e borra o texto), ele tira "fotos" da tela inteira e guarda as
+que MUDARAM. Ao terminar, chama o extrator.
 
-  1. Abra no Dominio a tela "Configuracao para Contabilizar Extrato Bancario" e MAXIMIZE a janela.
+  1. Abra no Dominio a tela "Configuracao para Contabilizar Extrato Bancario" (pode deixar a janela do tamanho normal).
   2. Preencha o nome da empresa e o codigo do banco, clique em "Iniciar gravacao".
-  3. Role a lista devagar, de cima para baixo (uns 10 a 15 linhas por vez, parando um instante).
+  3. Arraste a barra de rolagem HORIZONTAL da esquerda ate a direita, devagar. Se a lista tiver barra vertical:
+     role umas 10 a 15 linhas e arraste a horizontal de volta (zigue-zague), ate chegar ao fim da lista.
   4. Clique em "Parar e extrair". A pasta com os arquivos abre no fim.
 """
 import os
@@ -27,7 +28,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 class Capturador:
     """Guarda so as capturas novas e paradas. `captura` devolve um array BGR (altura x largura x 3)."""
 
-    def __init__(self, captura, pasta, intervalo=0.15, estavel=0.6, mudanca=0.8, limite=3000):
+    def __init__(self, captura, pasta, intervalo=0.15, estavel=1e9, mudanca=0.3, limite=1500):
         self.captura, self.pasta, self.intervalo = captura, pasta, intervalo
         self.estavel, self.mudanca, self.limite = estavel, mudanca, limite
         self.guardadas = 0

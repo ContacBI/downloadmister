@@ -242,6 +242,9 @@ def ler_celula(img, x0, x1, y0, y1, texto=True):
         # o numero de palavras do texto lido nao bate com o de espacos da imagem: leitura duvidosa
         if abs((out[0].count(" ") + 1) - (len(_vazios(g)) + 1)) >= 1:
             out = (out[0], min(out[1], 0.6))
+    if texto and out[0]:
+        limpo = re.sub(r"^[\s:;|.,'`!]+", "", out[0])   # a borda da celula as vezes vira ':' ou '|' no inicio do texto
+        out = (limpo, out[1])
     _CACHE[chave] = out
     return out
 
@@ -338,40 +341,56 @@ def igual(a, b):
     return 0.5 * sim(a["parte"], b["parte"]) + 0.3 * sim(a["hist"], b["hist"]) + 0.2 * (a["cod"] == b["cod"]) if a["tipo"] == b["tipo"] else 0.0
 
 
+def _alinhar(A, B, limite=0.72, minimo=3):
+    """Melhor posicao de B dentro de A (por sobreposicao de linhas parecidas). Devolve (acertos, offset) ou None."""
+    melhor = None
+    for off in range(-(len(B) - 1), len(A)):
+        pares = [(i, off + i) for i in range(len(B)) if 0 <= off + i < len(A)]
+        if len(pares) < minimo:
+            continue
+        boas = sum(igual(B[i][0], A[j][0]) >= limite for i, j in pares)
+        if boas >= min(minimo, len(pares)) and boas / len(pares) >= 0.6 and (melhor is None or boas > melhor[0]):
+            melhor = (boas, off)
+    return melhor
+
+
+def _fundir(A, B, off):
+    ini, fim = min(0, off), max(len(A), off + len(B))
+    out = []
+    for pos in range(ini, fim):
+        obs = []
+        if 0 <= pos < len(A):
+            obs += A[pos]
+        j = pos - off
+        if 0 <= j < len(B):
+            obs += B[j]
+        out.append(obs)
+    return out
+
+
 def juntar(janelas, limite=0.72, minimo=3):
-    geral, avisos = [], []
-    orfas = []
-    for n, w in enumerate(janelas):
-        if not geral:
-            geral = [[r] for r in w]
-            continue
-        melhor = None
-        for off in range(-(len(w) - 1), len(geral)):
-            pares = [(i, off + i) for i in range(len(w)) if 0 <= off + i < len(geral)]
-            if len(pares) < minimo:
-                continue
-            pont = [igual(w[i], geral[j][0]) for i, j in pares]
-            boas = sum(p >= limite for p in pont)
-            if boas >= min(minimo, len(pares)) and boas / len(pares) >= 0.6:
-                if melhor is None or boas > melhor[0]:
-                    melhor = (boas, off)
-        if melhor is None:
-            orfas.append(n)
-            continue
-        off = melhor[1]
-        if off < 0:
-            geral = [[r] for r in w[:-off]] + geral
-            off = 0
-        for i, r in enumerate(w):
-            j = off + i + (0 if melhor[1] >= 0 else -melhor[1] * 0)
-            j = melhor[1] + i + (-melhor[1] if melhor[1] < 0 else 0)
-            if j < len(geral):
-                geral[j].append(r)
-            else:
-                geral.append([r])
-    if orfas:
-        avisos.append(f"{len(orfas)} tela(s) sem sobreposicao com as demais (janelas {orfas}): pode ter faltado linha. "
-                      f"Role mais devagar, deixando umas 3 linhas repetidas entre uma tela e a proxima.")
+    """Junta as telas da rolagem numa lista unica, sem repetir as linhas que aparecem em duas telas."""
+    clusters = [[[r] for r in w] for w in janelas if w]
+    mudou = True
+    while mudou and len(clusters) > 1:
+        mudou = False
+        for i in range(len(clusters)):
+            for j in range(len(clusters)):
+                if i == j:
+                    continue
+                m = _alinhar(clusters[i], clusters[j], limite, minimo)
+                if m:
+                    clusters[i] = _fundir(clusters[i], clusters[j], m[1])
+                    del clusters[j]
+                    mudou = True
+                    break
+            if mudou:
+                break
+    avisos = []
+    if len(clusters) > 1:
+        avisos.append(f"{len(clusters)} trechos da lista nao se encontram (sem linhas repetidas entre eles): pode ter faltado linha entre um trecho e o seguinte. "
+                      f"Role mais devagar, deixando umas 3 linhas repetidas entre uma tela e a proxima. Os trechos foram colocados na ordem em que apareceram.")
+    geral = [obs for c in clusters for obs in c]
     return geral, avisos
 
 
@@ -388,7 +407,7 @@ def votar(obs):
             duvida = True
     out["obs"] = len(obs)
     out["conf"] = float(np.mean([o["conf"] for o in obs]))
-    out["conferir"] = duvida or len(obs) < 2 or out["conf"] < 0.85 or not out["cod"]
+    out["conferir"] = duvida or out["conf"] < 0.85 or not out["cod"]
     return out
 
 
@@ -419,6 +438,179 @@ def gerar_json(regras, conta_id, expandir):
     return out
 
 
+# --------------------------------------------------------------------------------------------
+# janela NAO maximizada: a grade mostra so uma parte das colunas de cada vez (esquerda / meio / direita)
+# --------------------------------------------------------------------------------------------
+def _corrida(v, limite=160, minimo=40):
+    """Maior sequencia de pixels escuros (a 'alca' da barra de rolagem). Devolve (inicio, fim) ou None."""
+    m = v < limite
+    melhor, i = None, 0
+    while i < len(m):
+        if m[i]:
+            j = i
+            while j < len(m) and m[j]:
+                j += 1
+            if j - i >= minimo and (melhor is None or j - i > melhor[1] - melhor[0]):
+                melhor = (i, j)
+            i = j
+        else:
+            i += 1
+    return melhor
+
+
+def barras(img, ref):
+    """Posicao das 'alcas' das barras de rolagem (so pixels, sem OCR). ref = info_quadro de um quadro de referencia."""
+    g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    y_h, cab_cy, inc, rep = ref["y_h"], ref["cab_cy"], ref["inc"], ref["rep"]
+    hb = None
+    for y in range(y_h - 6, y_h + 7):
+        r = _corrida(g[y, 560:1300])
+        if r and (hb is None or r[1] - r[0] > hb[1] - hb[0]):
+            hb = (r[0] + 560, r[1] + 560)
+    vb = None
+    if rep is not None:
+        y_a, y_b = int(cab_cy + 12), int(y_h - 12)
+        for x in range(int(rep["x0"] - 76), int(rep["x0"] - 60)):
+            r = _corrida(g[y_a:y_b, x], limite=160, minimo=25)   # a alca aparece como uma linha escura no meio da barra
+            if r and r[1] - r[0] < (y_b - y_a) * 0.95 and (vb is None or r[1] - r[0] > vb[1] - vb[0]):
+                vb = (r[0] + y_a, r[1] + y_a)
+    if hb is not None and (hb[1] - hb[0] > 420 or hb[1] - hb[0] < 60):
+        hb = None   # nao e uma alca de barra (quadro sem a janela do Dominio)
+    return dict(hb=hb, vb=vb)
+
+
+def info_quadro(img, ref=None):
+    """Le o quadro inteiro uma vez (OCR): textos, posicoes das linhas e das barras de rolagem."""
+    caixas = ler_tela_inteira(img)
+    inc = next((c for c in caixas if norm(c["t"]).startswith("INCLUIR")), None)
+    rep = next((c for c in caixas if norm(c["t"]).startswith("REPLICAR")), None)
+    palavras = ("PARTE DO HIST", "TIPO", "NUMERO DO", "CODIGO", "CONTRAPARTIDA", "PARTIDA", "HISTORICO PARA", "LANCAMENTO CONTABIL")
+    cab = [c for c in caixas if (inc is None or c["cy"] < inc["cy"] - 80) and any(norm(c["t"]).startswith(w) for w in palavras)]
+    if ref is None and (not cab or inc is None):
+        return None
+    if ref is not None:
+        inc, rep, cab_cy, y_h = ref["inc"], ref["rep"], ref["cab_cy"], ref["y_h"]
+    else:
+        cab_cy = Counter(int(c["cy"] // 6) for c in cab).most_common(1)[0][0] * 6 + 3
+        cab = [c for c in cab if abs(c["cy"] - cab_cy) < 9]
+        cab_cy = float(np.median([c["cy"] for c in cab]))
+        y_h = int(inc["cy"] - 34)
+    tipos = []
+    for c in caixas:
+        w = norm(c["t"]).replace(" ", "")
+        k = difflib.get_close_matches(w, list(TIPOS), n=1, cutoff=0.8)
+        if k and len(w) <= 9 and cab_cy + 8 < c["cy"] < inc["cy"] - 40:
+            tipos.append(dict(c, tipo=TIPOS[k[0]]))
+    if tipos:
+        xm = Counter(int(t["x0"] // 12) for t in tipos).most_common(1)[0][0]
+        tipos = sorted([t for t in tipos if int(t["x0"] // 12) == xm], key=lambda t: t["cy"])
+    out = dict(caixas=caixas, inc=inc, rep=rep, cab_cy=cab_cy, tipos=tipos, y_h=y_h)
+    out.update(barras(img, out))
+    return out
+
+
+def _caixas_da_linha(img, cy, passo, x0, x1):
+    y0, y1 = cy - passo / 2 + 1, cy + passo / 2 - 1
+    x0, x1 = int(max(0, x0)), int(min(img.shape[1], x1))
+    rec = img[int(y0):int(y1), x0:x1]
+    gg = cv2.copyMakeBorder(cv2.resize(_cinza(rec), None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC), 12, 12, 12, 12, cv2.BORDER_CONSTANT, value=255)
+    res, _ = ocr()(cv2.cvtColor(gg, cv2.COLOR_GRAY2BGR))
+    out = []
+    for b, txt, _ in sorted(res or [], key=lambda r: _bbox(r[0])[0]):
+        out.append(((_bbox(b)[0] - 12) / 4 + x0, txt))
+    return out
+
+
+def _moda_ultimo(img, cys, passo, x0, x1):
+    lefts = []
+    for cy in cys[:40]:
+        bx = _caixas_da_linha(img, cy, passo, x0, x1)
+        if len(bx) >= 2:
+            lefts.append(int(round(bx[-1][0] / 3)))
+    return Counter(lefts).most_common(1)[0][0] * 3 - 2 if lefts else None
+
+
+def processar_multivisao(grupos, x0min, x1max, log=print):
+    """grupos: lista de blocos; cada bloco = lista de (nome, img, info). Junta esquerda/meio/direita de cada bloco de linhas."""
+    quadros = [q for g in grupos for q in g]
+    grid_l, grid_r = x0min - 18, x1max + 16
+    passo = float(np.median([np.median(np.diff([t["cy"] for t in q[2]["tipos"]])) for q in quadros if len(q[2]["tipos"]) >= 3] or [17]))
+    primeira = float(np.median([q[2]["tipos"][0]["cy"] for q in quadros if q[2]["tipos"]]))
+    janelas, avisos = [], []
+    for gi, grp in enumerate(grupos):
+        esq = [q for q in grp if q[2]["hb"] and q[2]["hb"][0] <= x0min + 3 and len(q[2]["tipos"]) >= 3]
+        dirt = [q for q in grp if q[2]["hb"] and q[2]["hb"][1] >= x1max - 3]
+        meio = [q for q in grp if q[2]["tipos"] and q[2]["hb"] and q[2]["hb"][0] > x0min + 3]
+        if not esq:
+            if len(grp) >= 4:
+                avisos.append(f"bloco {gi + 1}: nao tem a visao da ESQUERDA (colunas Parte do historico/Tipo): role a barra horizontal ate o inicio.")
+            continue
+        q_e = max(esq, key=lambda q: len(q[2]["tipos"]))
+        tipos_e = q_e[2]["tipos"]
+        tipo_x0 = float(np.median([t["x0"] for t in tipos_e])) - 3
+        ref = q_e[2]
+        nvis = int((ref["y_h"] - 8 - (primeira + passo / 2)) / passo) + 1
+        cys = {k: primeira + k * passo for k in range(nvis)}
+        linhas = {}
+        for k in range(nvis):
+            y = cys[k]
+            tt, _ = ler_celula(q_e[1], tipo_x0, tipo_x0 + 56, y - passo / 2 + 1, y + passo / 2 - 1, texto=False)
+            w = norm(tt).replace(" ", "")
+            m = difflib.get_close_matches(w, list(TIPOS), n=1, cutoff=0.7) if w else []
+            if m:
+                linhas[k] = dict(parte="", tipo=TIPOS[m[0]], cod="", contra="", hist="", conf=1.0)
+        ks = sorted(linhas)
+        if not ks:
+            continue
+        for k in ks:
+            y = cys[k]
+            linhas[k]["parte"], c = ler_celula(q_e[1], grid_l + 1, tipo_x0, y - passo / 2 + 1, y + passo / 2 - 1)
+            linhas[k]["conf"] = min(linhas[k]["conf"], c if c else 0.0)
+        # meio: codigo + contrapartida
+        if meio:
+            # o quadro do meio que mostra mais linhas com numeros de codigo
+            melhor = None
+            for q in meio:
+                tps = q[2]["tipos"]
+                x_t0 = float(np.median([t["x0"] for t in tps]))
+                n_dig = 0; dig_x = []
+                for t in tps[:6]:
+                    bx = _caixas_da_linha(q[1], t["cy"], passo, x_t0 + 55, grid_r)
+                    for x, txt in bx:
+                        if re.match(r"^\d{1,5}", txt):
+                            n_dig += 1; dig_x.append(x); break
+                if melhor is None or n_dig > melhor[0]:
+                    melhor = (n_dig, q, dig_x, x_t0)
+            n_dig, q_m, dig_x, x_t0 = melhor
+            if n_dig:
+                hist_x = _moda_ultimo(q_m[1], [t["cy"] for t in q_m[2]["tipos"]], passo, x_t0 + 55, grid_r) or (x_t0 + 447)
+                cod_x0 = min(dig_x) - 6
+                for k in ks:
+                    y = cys[k]
+                    corpo, c2 = ler_celula(q_m[1], cod_x0, hist_x - 1, y - passo / 2 + 1, y + passo / 2 - 1, texto=False)
+                    linhas[k]["cod"], linhas[k]["contra"] = separar_codigo(corpo)
+            else:
+                avisos.append(f"bloco {gi + 1}: nao achei a coluna do Codigo na visao do meio.")
+        elif len(grp) >= 4:
+            avisos.append(f"bloco {gi + 1}: nao tem a visao do MEIO (colunas Codigo/Contrapartida): pare a barra horizontal no meio.")
+        # direita: historico
+        if dirt:
+            q_d = max(dirt, key=lambda q: len(q[2]["caixas"]))
+            hx = _moda_ultimo(q_d[1], [cys[k] for k in ks], passo, grid_l, grid_r)
+            if hx:
+                for k in ks:
+                    h, c3 = ler_celula(q_d[1], hx + 1, grid_r - 1, cys[k] - passo / 2 + 1, cys[k] + passo / 2 - 1)
+                    linhas[k]["hist"] = h
+                    linhas[k]["conf"] = min(linhas[k]["conf"], c3 if c3 else 0.0)
+            else:
+                avisos.append(f"bloco {gi + 1}: nao achei a coluna do Historico contabil na visao da direita.")
+        elif len(grp) >= 4:
+            avisos.append(f"bloco {gi + 1}: nao tem a visao da DIREITA (Historico contabil): leve a barra horizontal ate o fim.")
+        janelas.append([linhas[k] for k in ks])
+        log(f"  bloco {gi + 1}: {len(ks)} linhas (esq {len(esq)} / meio {len(meio)} / dir {len(dirt)} quadros)")
+    return janelas, avisos
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("origem", help="video (.mp4/.avi) ou pasta com capturas PNG")
@@ -439,32 +631,80 @@ def main():
         manual = dict(codigo_x0=v[0], contra_x0=v[1], hist_x0=v[2], fim_x=v[3])
 
     t0 = time.time()
-    cols, grade0, primeiro = None, None, None
-    janelas, n_quadros, n_ignorados = [], 0, 0
-    for nome, img in iterar_quadros(a.origem, a.passo):
-        n_quadros += 1
-        caixas = ler_tela_inteira(img)
-        grade = achar_grade(caixas)
-        if not grade:
-            n_ignorados += 1
-            continue
-        if cols is None:
-            cols, erro = calibrar(img, grade, manual)
-            if not cols:
-                n_ignorados += 1
-                print("Aviso:", erro)
+    n_quadros, n_ignorados = 0, 0
+    # 1) todos os quadros distintos (a rolagem continua tambem vale: a tela nao "borra")
+    todos = list(iterar_quadros(a.origem, a.passo, estavel=1e9, minimo_mudanca=0.3))
+    n_quadros = len(todos)
+    print(f"{n_quadros} quadros distintos no video")
+    ref = None
+    for nome, img in todos[:40]:
+        ref = info_quadro(img)
+        if ref:
+            break
+    if ref is None:
+        sys.exit("Nao encontrei a grade de regras em nenhum quadro. Confira se a tela 'Configuracao para Contabilizar Extrato Bancario' esta visivel na gravacao.")
+    cols, primeiro, janelas, avisos = None, todos[0][1], [], []
+    if ref["hb"]:
+        print("Janela NAO maximizada: juntando as visoes esquerda / meio / direita de cada bloco...")
+        meta = [(nome, img, barras(img, ref)) for nome, img in todos]
+        hbs = [m[2]["hb"] for m in meta if m[2]["hb"]]
+        x0min, x1max = min(h[0] for h in hbs), max(h[1] for h in hbs)
+        # blocos = trechos com a barra vertical na mesma posicao
+        blocos, atual, ant = [], [], "inicio"
+        for m in meta:
+            vb = m[2]["vb"]
+            chave = None if vb is None else vb[0]
+            mudou = ant != "inicio" and ((chave is None) != (ant is None) or (chave is not None and ant is not None and abs(chave - ant) > 3))
+            if mudou and atual:
+                blocos.append(atual); atual = []
+            atual.append(m); ant = chave
+        if atual:
+            blocos.append(atual)
+        grupos = []
+        for bloco in blocos:
+            com = [m for m in bloco if m[2]["hb"]]
+            if not com:
                 continue
-            primeiro = img.copy()
-            print("Colunas detectadas:", cols)
-        linhas = ler_linhas(img, cols, grade)
-        if linhas:
-            janelas.append(linhas)
-        print(f"  quadro {n_quadros}: {len(linhas)} linhas ({time.time() - t0:.0f}s)", end="\r")
-    print()
+            esc = {}
+            lefts = [m for m in com if m[2]["hb"][0] <= x0min + 3]
+            rights = [m for m in com if m[2]["hb"][1] >= x1max - 3]
+            for lista in (lefts, rights):
+                for j in range(min(3, len(lista))):   # alguns candidatos espalhados no tempo; o OCR escolhe o melhor
+                    m = lista[int(len(lista) * j / min(3, len(lista)))]
+                    esc[m[0]] = m
+            ordem = sorted(com, key=lambda m: m[2]["hb"][0])
+            for j in range(1, 6):   # alguns quadros intermediarios (visao do meio)
+                m = ordem[min(len(ordem) - 1, int(len(ordem) * j / 6))]
+                esc[m[0]] = m
+            grupos.append([(n, im, info_quadro(im, ref)) for (n, im, _) in esc.values()])
+            print(f"  bloco {len(grupos)}: {len(bloco)} quadros, {len(esc)} lidos ({time.time() - t0:.0f}s)", end="\r")
+        print()
+        janelas, avisos = processar_multivisao(grupos, x0min, x1max)
+    else:
+        print("Janela maximizada: lendo as 6 colunas de cada tela...")
+        for nome, img in iterar_quadros(a.origem, a.passo):
+            info = info_quadro(img)
+            if not info:
+                n_ignorados += 1
+                continue
+            grade = achar_grade(info["caixas"])
+            if not grade:
+                continue
+            if cols is None:
+                cols, erro = calibrar(img, grade, manual)
+                if not cols:
+                    print("Aviso:", erro)
+                    continue
+                primeiro = img.copy()
+                print("Colunas detectadas:", cols)
+            linhas = ler_linhas(img, cols, grade)
+            if linhas:
+                janelas.append(linhas)
     if not janelas:
-        sys.exit("Nao encontrei a grade de regras em nenhum quadro. Confira se a janela do Dominio esta maximizada e visivel na gravacao.")
+        sys.exit("Nao consegui ler nenhuma regra. " + " ".join(avisos))
 
-    geral, avisos = juntar(janelas)
+    geral, avisos2 = juntar(janelas)
+    avisos += avisos2
     regras = [votar(obs) for obs in geral]
 
     # desenho de conferencia das colunas
