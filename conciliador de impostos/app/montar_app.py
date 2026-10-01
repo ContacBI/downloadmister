@@ -30,12 +30,16 @@ def enxuga(d):
             sec = "D" if (dd["sec"] or "").startswith("DÉBITOS") else "C" if (dd["sec"] or "").startswith("CRÉDITOS") else ""
             if not sec:  # relatórios sem cabeçalho de seção (ex.: DIFAL-NC): devolução de saída reduz o imposto = crédito; o resto = débito
                 sec = "C" if (dd["mov"] or "").startswith("Devoluções de saída") else "D"
+            if tri in ("006", "007"):  # CSLL/IRPJ: colunas = valor contábil, % base presumida, base de cálculo, alíquota (não há "valor do imposto" por nota)
+                bc, aq = v[2], v[3]
+                docs.append([sec, dd["mov"] or "", dd["tipo"], dd["num"], dd["data"], v[0], bc, aq, round(bc * aq / 100, 2), (dd["txt"] or "") or f"base presumida {v[1]:g}%"])
+                continue
             docs.append([sec, dd["mov"] or "", dd["tipo"], dd["num"], dd["data"], v[0], v[1], v[2], v[idx], dd["txt"] or ""])
         demos.append(dict(
             e=chave[x["empresa"]], tri=tri, c=x["comp"], per=x.get("periodicidade"), uf=x.get("uf"),
             fn=x.get("fornecedor_nome"), fc=x.get("fornecedor_cnpj"), arq=x["arquivo"], titulo=x.get("titulo"),
             deb=x["debitos"], cred=x["creditos"], rec=x["a_recolher"], vp=x["valor_periodo"], sc=x["saldo_credor_seguinte"], sca=x["saldo_credor_anterior"],
-            ig=x["imposto_docs"], debN=x["deb_notas"], credN=x["cred_notas"], debA=x["deb_apur"], credA=x["cred_apur"],
+            ig=(round(sum(d[8] for d in docs), 2) if tri in ("006", "007") else x["imposto_docs"]), debN=x["deb_notas"], credN=x["cred_notas"], debA=x["deb_apur"], credA=x["cred_apur"],
             res=x["resumo"], conf=x["confere"], tot=[[t["rotulo"], t["sec"], t["v"]] for t in x["totais"]], docs=docs,
         ))
     rets = []
