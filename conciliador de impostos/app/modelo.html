@@ -80,6 +80,7 @@ svg text{fill:var(--mut);font-size:11px}
 .leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .tag.sel{outline:2px solid var(--brand)}
 @media(max-width:700px){header{padding:8px 12px}main{padding:12px 10px 50px}}
+dialog{background:var(--surf);color:var(--tx);border:1px solid var(--line);border-radius:14px;padding:20px}dialog::backdrop{background:#0008}dialog select{margin-left:6px}
 </style>
 </head>
 <body>
@@ -89,6 +90,7 @@ svg text{fill:var(--mut);font-size:11px}
   <span class="sp"></span>
   <div class="empchips" id="empChips"></div>
   <label class="mut">Período <select id="selPer"></select></label>
+  <button class="chip on" id="btnExp" title="Baixar relação completa (todos os meses, estados e notas)">⬇ Exportar tudo</button>
   <button class="chip" id="btnTema" title="Tema claro/escuro">◐</button>
 </header>
 <main id="app"><div id="msg">Carregando dados…</div></main>
@@ -150,7 +152,44 @@ function montaCabecalho() {
   $("#selPer").innerHTML = `<option value="ANO">Ano todo</option>` + competencias().map(c => `<option value="${c}">${compLabel(c)}</option>`).join("");
   $("#selPer").value = S.per;
   $("#selPer").onchange = e => { S.per = e.target.value; S.sel = null; render(); };
+  $("#btnExp").onclick = abreExportar;
   $("#btnTema").onclick = () => { const r = document.documentElement; r.dataset.tema = r.dataset.tema === "claro" ? "" : "claro"; try { localStorage.tema = r.dataset.tema; } catch (e) { } };
+}
+
+// ------------------------------------------------------------------------------------------------ exportar tudo
+function abreExportar() {
+  let dlg = $("#dlgExp");
+  if (!dlg) { dlg = document.createElement("dialog"); dlg.id = "dlgExp"; document.body.appendChild(dlg); }
+  const comps = competencias(), tris = [...new Set(D.demos.map(x => x.tri))].sort();
+  const opt = (v, n, sel) => `<option value="${v}" ${sel ? "selected" : ""}>${n}</option>`;
+  dlg.innerHTML = `<form method="dialog" style="min-width:340px;display:grid;gap:10px">
+    <h2 style="margin:0">⬇ Exportar relação completa</h2>
+    <label>Empresa <select id="xEmp">${opt("ALL", "Todas (consolidado)", S.emp === "ALL")}${Object.keys(D.emps).sort().map(k => opt(k, k, S.emp === k)).join("")}</select></label>
+    <label>Tributo <select id="xTri">${opt("", "Todos os tributos")}${tris.map(k => opt(k, k + " " + triNome(k))).join("")}</select></label>
+    <label>De <select id="xDe">${comps.map((c, i) => opt(c, compLabel(c), i === 0)).join("")}</select>
+      até <select id="xAte">${comps.map((c, i) => opt(c, compLabel(c), i === comps.length - 1)).join("")}</select></label>
+    <label>Formato <select id="xFmt">${opt("notas", "Todas as notas (uma linha por nota)")}${opt("resumo", "Resumo (uma linha por mês × UF/arquivo)")}</select></label>
+    <div id="xInfo" class="mut"></div>
+    <div class="bar"><button class="chip on" id="xBaixar" value="x">⬇ Baixar CSV</button><button class="chip" value="cancel">Cancelar</button></div></form>`;
+  const sel = () => {
+    const e = $("#xEmp").value, tr = $("#xTri").value, de = $("#xDe").value, ate = $("#xAte").value;
+    return D.demos.filter(x => (e === "ALL" || x.e === e) && (!tr || x.tri === tr) && x.c >= de && x.c <= ate)
+      .sort((a, b) => (a.e + a.tri + a.c + (a.uf || a.fn || "")).localeCompare(b.e + b.tri + b.c + (b.uf || b.fn || "")));
+  };
+  const info = () => { const L = sel(); $("#xInfo").textContent = `${L.length} arquivos · ${fmt0(soma(L, x => x.docs.length))} notas · a recolher ${fmt(soma(L, x => x.vp))}`; };
+  dlg.onchange = info; info();
+  $("#xBaixar").onclick = ev => {
+    ev.preventDefault();
+    const L = sel(), n2 = v => v == null ? "" : String(v).replace(".", ","), f = $("#xFmt").value;
+    const tag = `${$("#xEmp").value}-${$("#xTri").value || "todos"}-${$("#xDe").value}_${$("#xAte").value}`;
+    if (f === "resumo") baixarCsv(`resumo-${tag}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Fornecedor", "CNPJ fornecedor", "Notas", "Imposto das notas", "Débitos", "Créditos", "A recolher", "Arquivo"],
+      ...L.map(x => [x.e, x.tri + " " + triNome(x.tri), compLabel(x.c), x.uf || "", x.fn || "", x.fc || "", x.docs.length, n2(x.ig), n2(x.deb), n2(x.cred), n2(x.vp), x.arq]),
+      ["", "", "", "", "", "TOTAL", soma(L, x => x.docs.length), n2(soma(L, x => x.ig)), n2(soma(L, x => x.deb)), n2(soma(L, x => x.cred)), n2(soma(L, x => x.vp)), ""]]);
+    else baixarCsv(`notas-${tag}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Fornecedor", "Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base de cálculo", "Alíquota", "Imposto", "Obs", "Arquivo"],
+      ...L.flatMap(x => x.docs.map(d => [x.e, x.tri, compLabel(x.c), x.uf || "", x.fn || "", d[0] === "D" ? "Débito" : d[0] === "C" ? "Crédito" : "", d[1], d[2], d[3], d[4], n2(d[5]), n2(d[6]), n2(d[7]), n2(d[8]), d[9], x.arq]))]);
+    dlg.close();
+  };
+  dlg.showModal();
 }
 
 // ------------------------------------------------------------------------------------------------ painel
