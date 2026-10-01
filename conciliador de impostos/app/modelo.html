@@ -81,7 +81,7 @@ svg text{fill:var(--mut);font-size:11px}
 .tag.sel{outline:2px solid var(--brand)}
 @media(max-width:700px){header{padding:8px 12px}main{padding:12px 10px 50px}}
 dialog{background:var(--surf);color:var(--tx);border:1px solid var(--line);border-radius:14px;padding:20px}dialog::backdrop{background:#0008}dialog select{margin-left:6px}
-.mk{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.mk b{width:7px;height:7px;border-radius:2px;border:1px solid var(--faint);display:inline-block}.mk b.p{background:linear-gradient(90deg,var(--ok) 50%,transparent 50%)}.mk b.t{background:var(--ok);border-color:var(--ok)}
+.mk{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.mk b{width:13px;height:13px;border-radius:3px;border:1px solid var(--faint);display:inline-block;font:700 8px/11px system-ui;text-align:center;color:var(--faint);cursor:pointer;font-style:normal}.mk b:hover{border-color:var(--ok);color:var(--ok)}.mk b.t{color:#04140c}td.cell.feito{background:color-mix(in srgb,var(--ok) 30%,transparent)!important}td.cell.feito::after{content:"✔";color:var(--ok);margin-left:4px;font-size:11px}.mk b.p{background:linear-gradient(90deg,var(--ok) 50%,transparent 50%)}.mk b.t{background:var(--ok);border-color:var(--ok)}
 .flags{display:inline-flex;gap:10px;align-items:center;font-size:12px;color:var(--mut)}.flags label{display:inline-flex;gap:4px;align-items:center;cursor:pointer;white-space:nowrap}.flags input{accent-color:var(--ok);width:15px;height:15px;cursor:pointer}
 .prog{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}.prog .pg1{flex:1;min-width:200px;background:var(--surf);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px}.prog .barra{height:6px;background:var(--surf2);border-radius:4px;overflow:hidden;margin-top:6px}.prog .barra i{display:block;height:100%;background:var(--ok)}
 </style>
@@ -120,7 +120,8 @@ function setMarc(arqs, f, val) {
   salvaMarc();
 }
 const estadoM = (arqs, f) => { const n = arqs.filter(x => marcOf(x)[f]).length; return n === 0 ? "" : n === arqs.length ? "t" : "p"; };
-const marcaMini = arqs => `<span class="mk" title="${FLAGS.map(([f, n]) => n + ": " + arqs.filter(x => marcOf(x)[f]).length + "/" + arqs.length).join(" · ")}">${FLAGS.map(([f]) => `<b class="${estadoM(arqs, f)}"></b>`).join("")}</span>`;
+const marcaMini = (arqs, esc = "") => `<span class="mk" title="${FLAGS.map(([f, n]) => n + ": " + arqs.filter(x => marcOf(x)[f]).length + "/" + arqs.length).join(" · ")}\nClique no quadradinho para marcar/desmarcar tudo (I = importado, C = conferido, P = pago)">${FLAGS.map(([f, n]) => `<b class="${estadoM(arqs, f)}" data-mkc="${f}" ${esc}>${n[0]}</b>`).join("")}</span>`;
+function arqsEscopo(tri, c, comps) { return D.demos.filter(x => (S.emp === "ALL" || x.e === S.emp) && (!tri || x.tri === tri) && (c ? x.c === c : comps.includes(x.c))); }
 const simM = (x, f) => marcOf(x)[f] ? "Sim" : "";
 function refresh() {
   const y = window.scrollY, abertos = [...document.querySelectorAll("#detalhe details.arq")].map(d => d.open);
@@ -248,7 +249,7 @@ function viewPainel() {
   </div>`;
   h += `<div class="prog">${FLAGS.map(([f, n]) => { const k = todos.filter(x => marcOf(x)[f]).length; return `<div class="pg1"><div class="mut" style="font-size:12px">${n.toUpperCase()}</div><div><b style="font-size:18px">${fmt0(k)}</b> <span class="mut">de ${fmt0(todos.length)} demonstrativos</span></div><div class="barra"><i style="width:${todos.length ? 100 * k / todos.length : 0}%"></i></div></div>`; }).join("")}</div>`;
   h += `<div class="card"><div class="bar"><b>Tributo × mês</b><span class="sp"></span>${METRICAS.map(([k, n]) => `<button class="chip ${S.metrica === k ? "on" : ""}" data-met="${k}">${n}</button>`).join("")}<button class="chip" id="expMatriz">⬇ CSV</button></div>`;
-  h += `<div class="scroll" style="max-height:none"><table class="matriz"><thead><tr><th class="l">Tributo</th>${comps.map(c => `<th class="mes" data-mes="${c}" title="Ver só ${compLabel(c)}">${compLabel(c)}</th>`).join("")}<th>Tendência</th><th class="tot">${S.metrica === "sc" ? "Último" : "Total"}</th></tr></thead><tbody>`;
+  h += `<div class="scroll" style="max-height:none"><table class="matriz"><thead><tr><th class="l">Tributo</th>${comps.map(c => `<th class="mes" data-mes="${c}" title="Ver só ${compLabel(c)}">${compLabel(c)}</th>`).join("")}<th>Tendência</th><th class="tot">${S.metrica === "sc" ? "Último" : "Total"}</th></tr><tr class="mesmk"><th class="l mut" style="font-weight:400">Marcar o mês todo ↓</th>${comps.map(c => `<th>${marcaMini(arqsEscopo(null, c, comps), `data-m="${c}"`)}</th>`).join("")}<th></th><th></th></tr></thead><tbody>`;
   const linhasCsv = [["Tributo", ...comps.map(compLabel), "Total"]];
   let grpAtual = null;
   const ordemTris = [...tris].sort((a, b) => GRUPOS.findIndex(g => g[1].includes(a)) - GRUPOS.findIndex(g => g[1].includes(b)) || a.localeCompare(b));
@@ -258,14 +259,14 @@ function viewPainel() {
     const maxv = Math.max(1, ...vals.filter(v => v != null).map(Math.abs));
     const tot = S.metrica === "sc" ? [...vals].reverse().find(v => v != null) ?? null : soma(vals.filter(v => v != null), v => v);
     const hist = competencias().map(c => { const g = grupos(false).get(t + "|" + c); return g ? valorGrupo(g, S.metrica) : null; });
-    h += `<tr><td class="l rowlink" data-tri-row="${t}" title="Ver a evolução mês a mês"><b>${t}</b> ${esc(triNome(t))}</td>`;
+    h += `<tr><td class="l rowlink" data-tri-row="${t}" title="Ver a evolução mês a mês"><b>${t}</b> ${esc(triNome(t))}${marcaMini(arqsEscopo(t, null, comps), `data-t="${t}"`)}</td>`;
     comps.forEach((c, i) => {
       const v = vals[i];
       if (v === undefined) { h += `<td class="cell sem">·</td>`; return; }
       const g = gs.get(t + "|" + c); const ruim = g.arqs.some(x => x.conf.some(k => !k.ok));
       const cor = v == null ? "" : v > 0.005 ? (S.metrica === "sc" || S.metrica === "cred" ? "var(--ok)" : "var(--warn)") : "transparent";
       const bg = v != null && v > 0.005 ? `background:color-mix(in srgb,${cor} ${Math.round(8 + 26 * Math.abs(v) / maxv)}%,transparent)` : "";
-      h += `<td class="cell ${v == null || Math.abs(v) < 0.005 ? "zero" : ""} ${cl(v)}" style="${bg}" data-tri="${t}" data-c="${c}">${ruim ? '<i class="dot"></i>' : ""}${v == null ? "—" : fmt(v)}${marcaMini(g.arqs)}</td>`;
+      h += `<td class="cell ${v == null || Math.abs(v) < 0.005 ? "zero" : ""} ${cl(v)} ${FLAGS.every(([f]) => estadoM(g.arqs, f) === "t") ? "feito" : ""}" style="${bg}" data-tri="${t}" data-c="${c}">${ruim ? '<i class="dot"></i>' : ""}${v == null ? "—" : fmt(v)}${marcaMini(g.arqs, `data-t="${t}" data-m="${c}"`)}</td>`;
     });
     h += `<td>${spark(hist)}</td><td class="tot ${cl(tot)}">${fmt(tot)}</td></tr>`;
     linhasCsv.push([`${t} ${triNome(t)}`, ...vals.map(v => v == null ? "" : String(v).replace(".", ",")), tot == null ? "" : String(tot).replace(".", ",")]);
@@ -278,6 +279,8 @@ function viewPainel() {
     const mm = e.target.closest("th[data-mes]"); if (mm) { S.per = S.per === mm.dataset.mes ? "ANO" : mm.dataset.mes; S.sel = null; render(); return; }
     const tr = e.target.closest("[data-tri-row]"); if (tr) { S.view = "tributo"; S.tri = tr.dataset.triRow; S.sel = null; render(); return; }
     if (e.target.id === "expMatriz") { baixarCsv("matriz-tributos.csv", linhasCsv); return; }
+    const mk = e.target.closest("b[data-mkc]");
+    if (mk) { const arqs = arqsEscopo(mk.dataset.t || null, mk.dataset.m || null, comps); if (arqs.length) { setMarc(arqs, mk.dataset.mkc, estadoM(arqs, mk.dataset.mkc) !== "t"); refresh(); } return; }
     const c = e.target.closest("td.cell[data-tri]"); if (c) { S.sel = { tri: c.dataset.tri, c: c.dataset.c }; viewDetalhe(); $("#detalhe").scrollIntoView({ behavior: "smooth" }); }
   };
   if (S.sel) viewDetalhe();
