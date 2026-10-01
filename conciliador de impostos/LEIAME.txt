@@ -1,4 +1,6 @@
 Pasta: conciliador de impostos
 
-Coloque aqui os arquivos para o conciliador (relatorios de impostos, guias, extratos, balancetes etc.).
-Sugestao de organizacao: uma subpasta por mes (ex.: 2026-09) e, dentro, uma por empresa.
+Uma pasta por empresa (Impostos micro ba / RJ / sp), cada uma com as pastas dos impostos (codigo. nome),
+iguais as do computador do escritorio. Em cada empresa tambem ficam os relatorios
+"Retencoes a Recolher (fornecedor).pdf" e "Retencoes a Recolher (impostos).pdf" (na raiz da empresa, nao dentro das pastas).
+Os arquivos .gitkeep so existem para o Git guardar pastas vazias; podem ser apagados depois que a pasta tiver arquivos.
