@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conciliador de tributos</title>
+<style>
+:root{--bg:#0f1218;--surf:#171b24;--surf2:#1e2430;--line:#2a3140;--tx:#e8ecf4;--mut:#8b95a8;--faint:#5c6577;--brand:#7c8cff;--ok:#38c98b;--warn:#f0b24a;--bad:#ef5b6b;--info:#4cb4e8;--radius:10px;--mono:ui-monospace,Consolas,Menlo,monospace}
+:root[data-tema=claro]{--bg:#f4f6fa;--surf:#fff;--surf2:#eef1f7;--line:#d9dfea;--tx:#1b2230;--mut:#5b6679;--faint:#8b95a8;--brand:#4a5bd8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--surf) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:9px 20px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.01em}
+h1 small{color:var(--mut);font-weight:500;font-size:12px;margin-left:6px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button,.chip{border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit}
+nav button.on,.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+nav button:hover:not(.on),.chip:hover:not(.on){color:var(--tx);border-color:var(--faint)}
+.sp{flex:1}
+select,input[type=search],input[type=text]{background:var(--surf2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit}
+main{padding:18px 20px 60px;max-width:1500px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surf);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.kpi .l{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em}
+.kpi .v{font-size:21px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .s{color:var(--faint);font-size:12px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+.card h2{font-size:14px;margin:0 0 10px;font-weight:700}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.mut{color:var(--mut)} .faint{color:var(--faint)}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 9px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th{color:var(--mut);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surf)}
+th:first-child,td:first-child{text-align:left}
+td.l,th.l{text-align:left}
+tbody tr{border-bottom:1px solid var(--line)}
+tbody tr:hover{background:var(--surf2)}
+.matriz td.cell{cursor:pointer;min-width:92px;border-left:1px solid var(--line)}
+.matriz td.cell:hover{outline:1px solid var(--brand);outline-offset:-1px}
+.matriz td.sem{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--surf2) 5px 10px);color:var(--faint);cursor:default;text-align:center}
+.matriz td.zero{color:var(--faint)}
+.matriz td.tot,.matriz th.tot{font-weight:700;border-left:2px solid var(--line)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:var(--bad)}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;font-weight:600;border:1px solid var(--line)}
+.tag.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 50%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.tag.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 50%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+.tag.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 50%,transparent);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+.tag.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 50%,transparent)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.mini h3{font-size:12px;color:var(--mut);margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em}
+.mini table td{padding:3px 6px;font-size:13px}
+.arq{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.arq>summary{padding:10px 12px;cursor:pointer;display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surf2)}
+.arq>div{padding:12px}
+.scroll{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:8px}
+.neg{color:var(--bad)} .pos{color:var(--ok)}
+.pg{display:flex;gap:6px;align-items:center;margin-top:8px}
+.pg button{border:1px solid var(--line);background:transparent;color:var(--tx);border-radius:6px;padding:3px 10px;cursor:pointer}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.alert:last-child{border:0}
+.bars{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surf2);min-width:120px}
+.bars i{display:block;height:100%}
+button.lnk{background:none;border:0;color:var(--brand);cursor:pointer;padding:0;font:inherit;text-decoration:underline}
+#msg{padding:60px 20px;text-align:center;color:var(--mut)}
+
+.empchips{display:flex;gap:4px}
+.empchips .chip{padding:5px 11px}
+.grp td{background:var(--surf2);color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:5px 9px}
+.rowlink{cursor:pointer}
+.rowlink:hover b{color:var(--brand)}
+.spark{width:84px;height:22px;display:block}
+.kpi.click{cursor:pointer;transition:border-color .15s,transform .15s}
+.kpi.click:hover{border-color:var(--brand);transform:translateY(-1px)}
+th.mes{cursor:pointer}
+th.mes:hover{color:var(--brand)}
+.crumb{display:flex;gap:8px;align-items:center;margin-bottom:12px;color:var(--mut)}
+.crumb button{background:none;border:0;color:var(--brand);cursor:pointer;font:inherit}
+svg text{fill:var(--mut);font-size:11px}
+.leg{display:flex;gap:14px;font-size:12px;color:var(--mut);margin:6px 0 2px}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.tag.sel{outline:2px solid var(--brand)}
+@media(max-width:700px){header{padding:8px 12px}main{padding:12px 10px 50px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Conciliador de tributos<small id="sub"></small></h1>
+  <nav id="nav"></nav>
+  <span class="sp"></span>
+  <div class="empchips" id="empChips"></div>
+  <label class="mut">Período <select id="selPer"></select></label>
+  <button class="chip" id="btnTema" title="Tema claro/escuro">◐</button>
+</header>
+<main id="app"><div id="msg">Carregando dados…</div></main>
+<script>
+const B64 = "/*__DADOS__*/";
+const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const METRICAS = [
+  ["vp", "A recolher (apuração)"], ["deb", "Débitos"], ["cred", "Créditos"], ["ig", "Imposto das notas"], ["sc", "Saldo credor p/ mês seguinte"],
+];
+const RET_TRI = { "16": "016", "25": "025", "26": "026", "18": "018", "63": "063" };
+const S = { emp: "ALL", per: "ANO", view: "painel", metrica: "vp", sel: null, nota: "", retFiltro: "todos", pgNotas: {} };
+let D, G = new Map();
+
+const $ = (s, el = document) => el.querySelector(s);
+const fmt = v => v == null || Number.isNaN(v) ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt0 = v => v == null ? "—" : v.toLocaleString("pt-BR");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const cl = v => v < -0.005 ? "neg" : "";
+const compLabel = c => c ? `${MESES[+c.slice(5) - 1]}/${c.slice(2, 4)}` : "—";
+const soma = (arr, f) => { let t = 0, n = 0; for (const x of arr) { const v = f(x); if (v != null) { t += v; n++; } } return n ? Math.round(t * 100) / 100 : null; };
+const triNome = c => (D.tributos[c] || c);
+const GRUPOS = [["ICMS e tributos estaduais", ["001", "008", "009", "027", "031", "055", "057", "145"]], ["Federais", ["002", "006", "007"]], ["Retenções na fonte", ["016", "018", "025", "026", "063"]]];
+const grupoDe = t => (GRUPOS.find(([n, l]) => l.includes(t)) || ["Outros"])[0];
+function spark(vals) {
+  const v = vals.map(x => x == null ? 0 : x), mx = Math.max(1, ...v.map(Math.abs)), w = 84, h = 22, bw = w / v.length;
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}">${v.map((x, i) => `<rect x="${i * bw + 1}" y="${h - Math.max(1, Math.abs(x) / mx * (h - 2)) - 1}" width="${bw - 2}" height="${Math.max(1, Math.abs(x) / mx * (h - 2))}" rx="1.5" fill="${x < 0 ? "var(--bad)" : "var(--brand)"}" opacity="${vals[i] == null ? .15 : .85}"/>`).join("")}</svg>`;
+}
+const empLabel = k => k;
+
+async function carregar() {
+  const bin = Uint8Array.from(atob(B64), c => c.charCodeAt(0));
+  const txt = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+  return JSON.parse(txt);
+}
+
+// ------------------------------------------------------------------------------------------------ dados derivados
+function noEscopo(x) { return (S.emp === "ALL" || x.e === S.emp) && (S.per === "ANO" || x.c === S.per); }
+function grupos(filtroPer = true) {
+  const m = new Map();
+  for (const x of D.demos) {
+    if (S.emp !== "ALL" && x.e !== S.emp) continue;
+    if (filtroPer && S.per !== "ANO" && x.c !== S.per) continue;
+    const k = x.tri + "|" + x.c;
+    if (!m.has(k)) m.set(k, { tri: x.tri, c: x.c, arqs: [] });
+    m.get(k).arqs.push(x);
+  }
+  return m;
+}
+const competencias = () => [...new Set(D.demos.map(x => x.c))].sort();
+
+// ------------------------------------------------------------------------------------------------ cabeçalho
+function montaCabecalho() {
+  $("#sub").textContent = " · " + Object.values(D.emps)[0].nome;
+  const abas = [["painel", "Painel"], ["notas", "Por nota"], ["ret", "Retenções"], ["filiais", "Filiais"], ["alertas", "Alertas"]];
+  $("#nav").innerHTML = abas.map(([k, n]) => `<button data-v="${k}" class="${S.view === k ? "on" : ""}">${n}</button>`).join("");
+  $("#nav").onclick = e => { const b = e.target.closest("button"); if (b) { S.view = b.dataset.v; S.sel = null; render(); } };
+  $("#empChips").innerHTML = [["ALL", "Consolidado"], ...Object.keys(D.emps).sort().map(k => [k, k])].map(([k, n]) => `<button class="chip ${S.emp === k ? "on" : ""}" data-e="${k}" title="${k === "ALL" ? "Todas as filiais somadas" : "CNPJ " + D.emps[k].cnpj}">${n}</button>`).join("");
+  $("#empChips").onclick = e => { const b = e.target.closest("[data-e]"); if (b) { S.emp = b.dataset.e; S.sel = null; render(); } };
+  $("#selPer").innerHTML = `<option value="ANO">Ano todo</option>` + competencias().map(c => `<option value="${c}">${compLabel(c)}</option>`).join("");
+  $("#selPer").value = S.per;
+  $("#selPer").onchange = e => { S.per = e.target.value; S.sel = null; render(); };
+  $("#btnTema").onclick = () => { const r = document.documentElement; r.dataset.tema = r.dataset.tema === "claro" ? "" : "claro"; try { localStorage.tema = r.dataset.tema; } catch (e) { } };
+}
+
+// ------------------------------------------------------------------------------------------------ painel
+function valorGrupo(g, met) {
+  const f = { vp: x => x.vp, deb: x => x.deb, cred: x => x.cred, ig: x => x.ig, sc: x => x.sc }[met];
+  return soma(g.arqs, f);
+}
+function viewPainel() {
+  const todos = D.demos.filter(noEscopo);
+  const gs = grupos();
+  const comps = S.per === "ANO" ? competencias() : [S.per];
+  const tris = [...new Set(D.demos.filter(x => S.emp === "ALL" || x.e === S.emp).map(x => x.tri))].sort();
+  const confOk = todos.reduce((a, x) => a + x.conf.filter(c => c.ok).length, 0), confTot = todos.reduce((a, x) => a + x.conf.length, 0);
+  const totRec = soma(todos, x => x.vp), totDeb = soma(todos, x => x.deb), totCred = soma(todos, x => x.cred);
+  let h = `<div class="kpis">
+    <div class="kpi click" data-kpi="vp"><div class="l">A recolher no período</div><div class="v">${fmt(totRec)}</div><div class="s">soma da apuração de todos os tributos</div></div>
+    <div class="kpi click" data-kpi="deb"><div class="l">Débitos apurados</div><div class="v">${fmt(totDeb)}</div><div class="s">${fmt0(todos.length)} demonstrativos</div></div>
+    <div class="kpi click" data-kpi="cred"><div class="l">Créditos</div><div class="v">${fmt(totCred)}</div><div class="s">créditos pelas entradas/devoluções</div></div>
+    <div class="kpi click" data-kpi="alertas"><div class="l">Notas × totais</div><div class="v ${confOk === confTot ? "pos" : "neg"}">${fmt0(confOk)}/${fmt0(confTot)}</div><div class="s">seções que fecham com o Total Geral</div></div>
+    <div class="kpi click" data-kpi="notas"><div class="l">Notas lidas</div><div class="v">${fmt0(todos.reduce((a, x) => a + x.docs.length, 0))}</div><div class="s">linhas de documentos</div></div>
+  </div>`;
+  h += `<div class="card"><div class="bar"><b>Tributo × mês</b><span class="sp"></span>${METRICAS.map(([k, n]) => `<button class="chip ${S.metrica === k ? "on" : ""}" data-met="${k}">${n}</button>`).join("")}<button class="chip" id="expMatriz">⬇ CSV</button></div>`;
+  h += `<div class="scroll" style="max-height:none"><table class="matriz"><thead><tr><th class="l">Tributo</th>${comps.map(c => `<th class="mes" data-mes="${c}" title="Ver só ${compLabel(c)}">${compLabel(c)}</th>`).join("")}<th>Tendência</th><th class="tot">${S.metrica === "sc" ? "Último" : "Total"}</th></tr></thead><tbody>`;
+  const linhasCsv = [["Tributo", ...comps.map(compLabel), "Total"]];
+  let grpAtual = null;
+  const ordemTris = [...tris].sort((a, b) => GRUPOS.findIndex(g => g[1].includes(a)) - GRUPOS.findIndex(g => g[1].includes(b)) || a.localeCompare(b));
+  for (const t of ordemTris) {
+    if (grupoDe(t) !== grpAtual) { grpAtual = grupoDe(t); h += `<tr class="grp"><td colspan="${comps.length + 3}">${grpAtual}</td></tr>`; }
+    const vals = comps.map(c => { const g = gs.get(t + "|" + c); return g ? valorGrupo(g, S.metrica) : undefined; });
+    const maxv = Math.max(1, ...vals.filter(v => v != null).map(Math.abs));
+    const tot = S.metrica === "sc" ? [...vals].reverse().find(v => v != null) ?? null : soma(vals.filter(v => v != null), v => v);
+    const hist = competencias().map(c => { const g = grupos(false).get(t + "|" + c); return g ? valorGrupo(g, S.metrica) : null; });
+    h += `<tr><td class="l rowlink" data-tri-row="${t}" title="Ver a evolução mês a mês"><b>${t}</b> ${esc(triNome(t))}</td>`;
+    comps.forEach((c, i) => {
+      const v = vals[i];
+      if (v === undefined) { h += `<td class="cell sem">·</td>`; return; }
+      const g = gs.get(t + "|" + c); const ruim = g.arqs.some(x => x.conf.some(k => !k.ok));
+      const cor = v == null ? "" : v > 0.005 ? (S.metrica === "sc" || S.metrica === "cred" ? "var(--ok)" : "var(--warn)") : "transparent";
+      const bg = v != null && v > 0.005 ? `background:color-mix(in srgb,${cor} ${Math.round(8 + 26 * Math.abs(v) / maxv)}%,transparent)` : "";
+      h += `<td class="cell ${v == null || Math.abs(v) < 0.005 ? "zero" : ""} ${cl(v)}" style="${bg}" data-tri="${t}" data-c="${c}">${ruim ? '<i class="dot"></i>' : ""}${v == null ? "—" : fmt(v)}</td>`;
+    });
+    h += `<td>${spark(hist)}</td><td class="tot ${cl(tot)}">${fmt(tot)}</td></tr>`;
+    linhasCsv.push([`${t} ${triNome(t)}`, ...vals.map(v => v == null ? "" : String(v).replace(".", ",")), tot == null ? "" : String(tot).replace(".", ",")]);
+  }
+  h += `</tbody></table></div><div class="mut" style="margin-top:8px;font-size:12px">Clique numa célula para ver o detalhe (apuração, conferência e notas). Células hachuradas = sem demonstrativo naquele mês. <i class="dot"></i> = alguma seção não fecha com o total.</div></div>`;
+  $("#app").innerHTML = h + `<div id="detalhe"></div>`;
+  $("#app").onclick = e => {
+    const b = e.target.closest("[data-met]"); if (b) { S.metrica = b.dataset.met; render(); return; }
+    const kp = e.target.closest("[data-kpi]"); if (kp) { const k = kp.dataset.kpi; if (k === "alertas" || k === "notas") { S.view = k; S.sel = null; render(); } else { S.metrica = k; render(); } return; }
+    const mm = e.target.closest("th[data-mes]"); if (mm) { S.per = S.per === mm.dataset.mes ? "ANO" : mm.dataset.mes; S.sel = null; render(); return; }
+    const tr = e.target.closest("[data-tri-row]"); if (tr) { S.view = "tributo"; S.tri = tr.dataset.triRow; S.sel = null; render(); return; }
+    if (e.target.id === "expMatriz") { baixarCsv("matriz-tributos.csv", linhasCsv); return; }
+    const c = e.target.closest("td.cell[data-tri]"); if (c) { S.sel = { tri: c.dataset.tri, c: c.dataset.c }; viewDetalhe(); $("#detalhe").scrollIntoView({ behavior: "smooth" }); }
+  };
+  if (S.sel) viewDetalhe();
+}
+
+// ------------------------------------------------------------------------------------------------ detalhe (tributo + mês)
+function tabelaResumo(titulo, linhas) {
+  if (!linhas || !linhas.length) return "";
+  return `<div class="mini"><h3>${titulo}</h3><table><tbody>${linhas.map(([l, v]) => `<tr><td class="l">${esc(l)}</td><td class="${cl(v)}">${fmt(v)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function viewDetalhe() {
+  const { tri, c } = S.sel;
+  const arqs = D.demos.filter(x => x.tri === tri && x.c === c && (S.emp === "ALL" || x.e === S.emp));
+  const el = $("#detalhe");
+  if (!arqs.length) { el.innerHTML = ""; return; }
+  const vp = soma(arqs, x => x.vp);
+  let h = `<div class="card"><div class="bar"><h2 style="margin:0">${tri} ${esc(triNome(tri))} · ${compLabel(c)} · ${S.emp === "ALL" ? "todas as empresas" : S.emp}</h2><span class="sp"></span><span class="tag info">${arqs.length} arquivo(s)</span><span class="tag ${vp > 0.005 ? "warn" : ""}">A recolher ${fmt(vp)}</span><button class="chip" id="fechaDet">✕ fechar</button></div>`;
+  const multi = arqs.length > 6;
+  arqs.sort((a, b) => (a.e + (a.uf || "") + (a.fn || "")).localeCompare(b.e + (b.uf || "") + (b.fn || "")));
+  if (multi) {
+    h += `<div class="scroll" style="max-height:260px;margin-bottom:12px"><table><thead><tr><th class="l">Empresa</th><th class="l">UF / Fornecedor</th><th>Notas</th><th>Imposto das notas</th><th>Débitos</th><th>Créditos</th><th>A recolher</th><th>Conferência</th></tr></thead><tbody>${arqs.map((x, i) => `<tr><td class="l">${x.e}</td><td class="l">${esc(x.uf || x.fn || "")}</td><td>${x.docs.length}</td><td>${fmt(x.ig)}</td><td>${fmt(x.deb)}</td><td>${fmt(x.cred)}</td><td>${fmt(x.vp)}</td><td>${x.conf.length ? (x.conf.every(k => k.ok) ? '<span class="tag ok">fecha</span>' : '<span class="tag bad">diverge</span>') : "—"}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+  arqs.forEach((x, i) => {
+    const ok = x.conf.length ? x.conf.every(k => k.ok) : null;
+    const difDeb = x.debN != null && x.debA != null && Math.abs(x.debN - x.debA) > 0.02;
+    h += `<details class="arq" ${!multi || i < 2 ? "open" : ""}><summary><b>${x.e}</b> <span class="mut">${esc(x.arq)}</span><span class="sp"></span>
+      ${x.uf ? `<span class="tag info">UF ${x.uf}</span>` : ""}${x.fn ? `<span class="tag info">${esc(x.fn)}</span>` : ""}
+      ${ok === true ? '<span class="tag ok">notas fecham com o total</span>' : ok === false ? '<span class="tag bad">notas ≠ total</span>' : ""}
+      ${difDeb ? `<span class="tag warn" title="Soma do imposto das notas × débitos da apuração">notas ${fmt(x.debN)} × apuração ${fmt(x.debA)}</span>` : ""}
+      <span class="tag">${x.docs.length} notas</span></summary><div>
+      <div class="grid2">${tabelaResumo("Débitos", x.res["DÉBITOS"])}${tabelaResumo("Créditos", x.res["CRÉDITOS"])}${tabelaResumo("Apuração", x.res["APURAÇÃO"])}</div>
+      ${x.tot.length && !x.conf.length ? `<div style="margin:10px 0"><b class="mut" style="font-size:12px">TOTAIS DO RELATÓRIO</b><table style="margin-top:4px"><tbody>${x.tot.map(([r, s, v]) => `<tr><td class="l">${esc(r)}</td><td>${v.map(fmt).join(" · ")}</td></tr>`).join("")}</tbody></table></div>` : ""}
+      ${x.conf.length ? `<div style="margin:10px 0"><b class="mut" style="font-size:12px">CONFERÊNCIA INTERNA</b><table style="margin-top:4px"><thead><tr><th class="l">Seção</th><th>Notas</th><th>Soma do imposto das notas</th><th>Total Geral do relatório</th><th>Diferença</th></tr></thead><tbody>${x.conf.map(k => `<tr><td class="l">${esc(k.sec || "—")}</td><td>${k.notas}</td><td>${fmt(k.soma)}</td><td>${fmt(k.total)}</td><td class="${k.ok ? "pos" : "neg"}">${k.total == null ? "—" : fmt(Math.round((k.soma - k.total) * 100) / 100)}</td></tr>`).join("")}</tbody></table></div>` : ""}
+      ${x.docs.length ? `<div data-notas="${D.demos.indexOf(x)}"></div>` : `<div class="faint">Sem notas listadas neste demonstrativo.</div>`}
+      </div></details>`;
+  });
+  el.innerHTML = h + "</div>";
+  $("#fechaDet").onclick = () => { S.sel = null; el.innerHTML = ""; };
+  el.querySelectorAll("[data-notas]").forEach(n => tabelaNotas(n, D.demos[+n.dataset.notas]));
+}
+// tabela de notas de um demonstrativo, com busca / filtro / ordenação / paginação
+function tabelaNotas(el, x) {
+  const st = { q: "", sec: "", tipo: "", ord: 4, asc: true, pg: 0 };
+  const tipos = [...new Set(x.docs.map(d => d[2]))];
+  const secs = [...new Set(x.docs.map(d => d[0] + "|" + d[1]))];
+  const POR = 100;
+  const dataKey = d => d.split("/").reverse().join("");
+  function desenha() {
+    let L = x.docs.filter(d => (!st.sec || d[0] + "|" + d[1] === st.sec) && (!st.tipo || d[2] === st.tipo) && (!st.q || (d[3] + " " + d[9]).toLowerCase().includes(st.q)));
+    const col = st.ord;
+    L = L.slice().sort((a, b) => { const va = col === 4 ? dataKey(a[4]) : a[col], vb = col === 4 ? dataKey(b[4]) : b[col]; return (va > vb ? 1 : va < vb ? -1 : 0) * (st.asc ? 1 : -1); });
+    const tot = soma(L, d => d[8]), totVc = soma(L, d => d[5]);
+    const pgs = Math.max(1, Math.ceil(L.length / POR)); st.pg = Math.min(st.pg, pgs - 1);
+    const pag = L.slice(st.pg * POR, st.pg * POR + POR);
+    el.innerHTML = `<div class="bar"><input type="search" placeholder="Buscar nota / cliente…" value="${esc(st.q)}" data-f="q">
+      <select data-f="tipo"><option value="">Todos os tipos</option>${tipos.map(t => `<option ${st.tipo === t ? "selected" : ""}>${t}</option>`).join("")}</select>
+      ${secs.length > 1 ? `<select data-f="sec"><option value="">Todas as seções</option>${secs.map(s => `<option value="${esc(s)}" ${st.sec === s ? "selected" : ""}>${s.startsWith("D") ? "Débito" : s.startsWith("C") ? "Crédito" : "—"} · ${esc(s.split("|")[1] || "—")}</option>`).join("")}</select>` : ""}
+      <span class="sp"></span><span class="mut">${fmt0(L.length)} notas · valor contábil ${fmt(totVc)} · imposto <b>${fmt(tot)}</b></span><button class="chip" data-f="csv">⬇ CSV</button></div>
+      <div class="scroll"><table><thead><tr><th class="l" data-o="3">Nota</th><th class="l" data-o="2">Tipo</th><th class="l" data-o="4">Data</th><th class="l">Seção</th><th data-o="5">Valor contábil</th><th data-o="6">Base de cálculo</th><th data-o="7">Alíq. %</th><th data-o="8">Imposto</th><th class="l">Obs.</th></tr></thead><tbody>
+      ${pag.map(d => `<tr><td class="l">${esc(d[3])}</td><td class="l">${esc(d[2])}</td><td class="l">${d[4]}</td><td class="l faint">${d[0] === "D" ? "Déb" : d[0] === "C" ? "Créd" : ""} ${esc(d[1])}</td><td>${fmt(d[5])}</td><td>${fmt(d[6])}</td><td>${fmt(d[7])}</td><td class="${cl(d[8])}"><b>${fmt(d[8])}</b></td><td class="l faint">${esc(d[9])}</td></tr>`).join("")}</tbody></table></div>
+      <div class="pg"><button data-f="ant">‹</button><span class="mut">página ${st.pg + 1} de ${pgs}</span><button data-f="prox">›</button></div>`;
+    el.querySelectorAll("[data-o]").forEach(th => th.style.cursor = "pointer");
+  }
+  el.onclick = e => {
+    const th = e.target.closest("[data-o]"); if (th) { const o = +th.dataset.o; st.asc = st.ord === o ? !st.asc : true; st.ord = o; desenha(); return; }
+    const f = e.target.closest("[data-f]")?.dataset.f;
+    if (f === "ant") { st.pg = Math.max(0, st.pg - 1); desenha(); }
+    if (f === "prox") { st.pg++; desenha(); }
+    if (f === "csv") baixarCsv(`notas-${x.e}-${x.tri}-${x.c}.csv`, [["Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base", "Alíquota", "Imposto", "Obs"], ...x.docs.map(d => d.map((v, i) => i >= 5 && i <= 8 ? String(v).replace(".", ",") : v))]);
+  };
+  el.onchange = e => { const f = e.target.dataset.f; if (f) { st[f] = e.target.value; st.pg = 0; desenha(); } };
+  el.oninput = e => { if (e.target.dataset.f === "q") { st.q = e.target.value.toLowerCase(); st.pg = 0; const pos = e.target.selectionStart; desenha(); const i = el.querySelector("[data-f=q]"); i.focus(); i.setSelectionRange(pos, pos); } };
+  desenha();
+}
+
+// ------------------------------------------------------------------------------------------------ evolução de um tributo
+function viewTributo() {
+  const t = S.tri, comps = competencias(), emps = Object.keys(D.emps).sort();
+  const cores = { SP: "#7c8cff", RJ: "#38c98b", BA: "#f0b24a" };
+  const met = S.metrica, f = { vp: x => x.vp, deb: x => x.deb, cred: x => x.cred, ig: x => x.ig, sc: x => x.sc }[met];
+  const val = (e, c) => { const a = D.demos.filter(x => x.tri === t && x.c === c && x.e === e); return a.length ? soma(a, f) : null; };
+  const serie = emps.map(e => comps.map(c => val(e, c)));
+  const totC = comps.map((c, i) => soma(emps.map((e, j) => serie[j][i]).filter(v => v != null), v => v));
+  const mx = Math.max(1, ...totC.filter(v => v != null).map(Math.abs));
+  const W = 900, H = 230, ml = 60, mb = 26, bw = (W - ml) / comps.length;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">`;
+  for (let i = 0; i <= 4; i++) { const y = 10 + (H - mb - 14) * (1 - i / 4); svg += `<line x1="${ml}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${ml - 6}" y="${y + 4}" text-anchor="end">${fmt0(Math.round(mx * i / 4))}</text>`; }
+  comps.forEach((c, i) => {
+    let acc = 0; const x0 = ml + i * bw + bw * .18;
+    emps.forEach((e, j) => { const v = Math.max(0, serie[j][i] || 0); if (!v) return; const h = v / mx * (H - mb - 14), y = H - mb - acc - h; acc += h; svg += `<rect x="${x0}" y="${y}" width="${bw * .64}" height="${h}" fill="${cores[e] || "#999"}" rx="2"><title>${e} · ${compLabel(c)}: ${fmt(serie[j][i])}</title></rect>`; });
+    svg += `<text x="${x0 + bw * .32}" y="${H - 8}" text-anchor="middle">${compLabel(c)}</text>`;
+  });
+  svg += "</svg>";
+  const nomeMet = METRICAS.find(m => m[0] === met)[1];
+  let h = `<div class="crumb"><button data-back>‹ Painel</button> / <b style="color:var(--tx)">${t} ${esc(triNome(t))}</b></div>
+  <div class="card"><div class="bar"><h2 style="margin:0">${t} ${esc(triNome(t))} — evolução mês a mês</h2><span class="sp"></span>${METRICAS.map(([k, n]) => `<button class="chip ${met === k ? "on" : ""}" data-met="${k}">${n}</button>`).join("")}</div>
+  <div class="leg">${emps.map(e => `<span><i style="background:${cores[e] || "#999"}"></i>${e}</span>`).join("")}<span>métrica: ${nomeMet}</span></div>${svg}</div>
+  <div class="card"><div class="scroll" style="max-height:none"><table><thead><tr><th class="l">Mês</th>${emps.map(e => `<th>${e}</th>`).join("")}<th class="tot">Total</th><th>Débitos</th><th>Créditos</th><th>Imposto das notas</th><th>Saldo credor seg.</th></tr></thead><tbody>`;
+  comps.forEach((c, i) => {
+    const arr = D.demos.filter(x => x.tri === t && x.c === c);
+    if (!arr.length) { h += `<tr><td class="l">${compLabel(c)}</td><td colspan="${emps.length + 5}" class="faint">sem demonstrativo</td></tr>`; return; }
+    h += `<tr class="rowlink" data-ir="${c}"><td class="l"><b>${compLabel(c)}</b></td>${emps.map((e, j) => `<td class="${cl(serie[j][i])}">${fmt(serie[j][i])}</td>`).join("")}<td class="tot ${cl(totC[i])}">${fmt(totC[i])}</td><td>${fmt(soma(arr, x => x.deb))}</td><td>${fmt(soma(arr, x => x.cred))}</td><td>${fmt(soma(arr, x => x.ig))}</td><td>${fmt(soma(arr, x => x.sc))}</td></tr>`;
+  });
+  h += `</tbody></table></div><div class="mut" style="margin-top:8px;font-size:12px">Clique numa linha para abrir o detalhe do mês (apuração, conferência e notas).</div></div><div id="detalhe"></div>`;
+  $("#app").innerHTML = h;
+  $("#app").onclick = e => {
+    if (e.target.closest("[data-back]")) { S.view = "painel"; render(); return; }
+    const b = e.target.closest("[data-met]"); if (b) { S.metrica = b.dataset.met; render(); return; }
+    const r = e.target.closest("[data-ir]"); if (r) { S.sel = { tri: t, c: r.dataset.ir }; viewDetalhe(); $("#detalhe").scrollIntoView({ behavior: "smooth" }); }
+  };
+  if (S.sel) viewDetalhe();
+}
+
+// ------------------------------------------------------------------------------------------------ por nota
+function viewNotas() {
+  let h = `<div class="card"><h2>Buscar uma nota em todos os tributos</h2><div class="bar"><input type="search" id="qNota" style="min-width:260px" placeholder="Número da nota (ou parte), ex.: 77447" value="${esc(S.nota)}"><span class="mut">procura em todos os demonstrativos do escopo selecionado (empresa e período)</span></div><div id="resNota"></div></div>`;
+  $("#app").innerHTML = h;
+  const run = () => {
+    const q = S.nota.trim().toLowerCase();
+    const out = $("#resNota");
+    if (q.length < 2) { out.innerHTML = `<div class="faint">Digite pelo menos 2 caracteres.</div>`; return; }
+    const R = [];
+    for (const x of D.demos) { if (!noEscopo(x)) continue; for (const d of x.docs) if (d[3].toLowerCase().includes(q) || d[9].toLowerCase().includes(q)) R.push({ x, d }); }
+    const porTri = {};
+    R.forEach(({ x, d }) => { const k = x.tri; (porTri[k] ||= { n: 0, imp: 0 }); porTri[k].n++; porTri[k].imp += d[8]; });
+    const top = R.slice(0, 600);
+    out.innerHTML = `<div style="margin-bottom:8px" class="bar"><b>${fmt0(R.length)} ocorrência(s)</b>${Object.entries(porTri).sort().map(([k, v]) => `<span class="tag info">${k} ${esc(triNome(k))}: ${v.n} · ${fmt(v.imp)}</span>`).join("")}<span class="sp"></span><button class="chip" id="csvNota">⬇ CSV</button></div>
+      <div class="scroll"><table><thead><tr><th class="l">Empresa</th><th class="l">Tributo</th><th class="l">Mês</th><th class="l">Tipo</th><th class="l">Nota</th><th class="l">Data</th><th>Valor contábil</th><th>Base</th><th>Alíq. %</th><th>Imposto</th><th class="l">Obs.</th></tr></thead><tbody>
+      ${top.map(({ x, d }) => `<tr><td class="l">${x.e}</td><td class="l">${x.tri} ${esc(triNome(x.tri))}${x.uf ? " " + x.uf : ""}</td><td class="l">${compLabel(x.c)}</td><td class="l">${esc(d[2])}</td><td class="l"><b>${esc(d[3])}</b></td><td class="l">${d[4]}</td><td>${fmt(d[5])}</td><td>${fmt(d[6])}</td><td>${fmt(d[7])}</td><td class="${cl(d[8])}"><b>${fmt(d[8])}</b></td><td class="l faint">${esc(d[9])}</td></tr>`).join("")}</tbody></table></div>${R.length > 600 ? `<div class="faint" style="margin-top:6px">Mostrando as 600 primeiras. Refine a busca.</div>` : ""}`;
+    $("#csvNota").onclick = () => baixarCsv("busca-nota.csv", [["Empresa", "Tributo", "Mês", "Tipo", "Nota", "Data", "Valor contábil", "Base", "Alíquota", "Imposto"], ...R.map(({ x, d }) => [x.e, x.tri + " " + triNome(x.tri), x.c, d[2], d[3], d[4], ...d.slice(5, 9).map(v => String(v).replace(".", ","))])]);
+  };
+  $("#qNota").oninput = e => { S.nota = e.target.value; run(); };
+  run();
+}
+
+// ------------------------------------------------------------------------------------------------ retenções × demonstrativos
+function cruzaRetencoes() {
+  // chave: empresa|tributo|nota. A data do relatório de retenções pode ser a do pagamento (≠ data da nota), então o casamento é por
+  // nota + valor (a retenção deve ser igual ao imposto da nota no demonstrativo).
+  const dem = new Map();
+  for (const x of D.demos) {
+    if (!Object.values(RET_TRI).includes(x.tri)) continue;
+    for (const d of x.docs) {
+      if (Math.abs(d[8]) < 0.005) continue;
+      const k = `${x.e}|${x.tri}|${d[3]}`;
+      if (!dem.has(k)) dem.set(k, []);
+      dem.get(k).push({ imp: d[8], x, d, usado: false });
+    }
+  }
+  const emps = new Set(D.retInfo.map(r => r.e));
+  const linhas = [];
+  for (const r of D.rets) {
+    const tri = RET_TRI[r.ic]; const cand = (dem.get(`${r.e}|${tri}|${r.nota}`) || []).filter(o => !o.usado);
+    let o = cand.find(c => Math.abs(c.imp - r.ret) < 0.02);
+    if (o) { o.usado = true; linhas.push({ ...r, st: "ok", dem: o.imp, dataDem: o.d[4] }); continue; }
+    o = cand.sort((a, b) => Math.abs(a.imp - r.ret) - Math.abs(b.imp - r.ret))[0];
+    if (o) { o.usado = true; linhas.push({ ...r, st: "valor diferente", dem: o.imp, dataDem: o.d[4] }); }
+    else linhas.push({ ...r, st: "só relatório", dem: null });
+  }
+  if (D.rets.length) for (const [k, arr] of dem) for (const o of arr) {
+    if (o.usado || !emps.has(o.x.e)) continue;
+    linhas.push({ e: o.x.e, ic: Object.keys(RET_TRI).find(i => RET_TRI[i] === o.x.tri), im: triNome(o.x.tri), nota: o.d[3], data: o.d[4], valor: o.d[5], ret: null, cr: "", nat: "", fc: "", fn: o.x.fn || "", st: "só demonstrativo", dem: o.imp });
+  }
+  return linhas;
+}
+function viewRet() {
+  if (!D.rets.length) { $("#app").innerHTML = `<div class="card">Nenhum relatório "Retenções a Recolher" foi carregado.</div>`; return; }
+  const all = cruzaRetencoes().filter(l => (S.emp === "ALL" || l.e === S.emp) && (S.per === "ANO" || compDe(l.data) === S.per));
+  const cont = {}; all.forEach(l => cont[l.st] = (cont[l.st] || 0) + 1);
+  const filtros = ["todos", "ok", "valor diferente", "só relatório", "só demonstrativo"];
+  const lista = all.filter(l => S.retFiltro === "todos" || l.st === S.retFiltro);
+  const tagCls = { ok: "ok", "valor diferente": "bad", "só relatório": "warn", "só demonstrativo": "warn" };
+  const empsCom = [...new Set(D.retInfo.map(r => r.e))];
+  let h = `<div class="card"><h2>Retenções a Recolher × Demonstrativos (IRRF, CRF, INSS retido, ISS retido, IRRF PF)</h2>
+    <div class="mut" style="margin-bottom:8px">Cruzamento por tributo + nota + valor (a data do relatório pode ser a do pagamento). Relatório carregado para: <b>${empsCom.join(", ")}</b>. "Só demonstrativo" = nota com imposto retido no demonstrativo que não aparece no relatório de retenções.</div>
+    <div class="bar">${filtros.map(f => `<button class="chip ${S.retFiltro === f ? "on" : ""}" data-rf="${f}">${f}${f === "todos" ? ` (${all.length})` : cont[f] ? ` (${cont[f]})` : " (0)"}</button>`).join("")}<span class="sp"></span><button class="chip" id="csvRet">⬇ CSV</button></div>
+    <div class="scroll" style="max-height:640px"><table><thead><tr><th class="l">Status</th><th class="l">Empresa</th><th class="l">Imposto</th><th class="l">Fornecedor</th><th class="l">Nota</th><th class="l">Data</th><th>Valor</th><th>Retenção (relatório)</th><th>Imposto (demonstrativo)</th><th class="l">Data na nota</th><th class="l">Cód. rec.</th></tr></thead><tbody>
+    ${lista.slice(0, 800).map(l => `<tr><td class="l"><span class="tag ${tagCls[l.st]}">${l.st}</span></td><td class="l">${l.e}</td><td class="l">${l.ic} ${esc(l.im)}</td><td class="l">${esc(l.fc ? l.fc + " " : "")}${esc(l.fn)}</td><td class="l">${esc(l.nota)}</td><td class="l">${l.data}</td><td>${fmt(l.valor)}</td><td>${fmt(l.ret)}</td><td>${fmt(l.dem)}</td><td class="l faint">${l.dataDem && l.dataDem !== l.data ? l.dataDem : ""}</td><td class="l faint">${esc(l.cr)}</td></tr>`).join("")}</tbody></table></div></div>`;
+  $("#app").innerHTML = h;
+  $("#app").onclick = e => {
+    const b = e.target.closest("[data-rf]"); if (b) { S.retFiltro = b.dataset.rf; viewRet(); return; }
+    if (e.target.id === "csvRet") baixarCsv("retencoes-x-demonstrativos.csv", [["Status", "Empresa", "Imposto", "Fornecedor", "Nota", "Data", "Valor", "Retenção", "Imposto demonstrativo", "Cód. rec."], ...lista.map(l => [l.st, l.e, l.ic + " " + l.im, (l.fc || "") + " " + (l.fn || ""), l.nota, l.data, String(l.valor ?? "").replace(".", ","), String(l.ret ?? "").replace(".", ","), String(l.dem ?? "").replace(".", ","), l.cr])]);
+  };
+}
+const compDe = d => d.slice(6) + "-" + d.slice(3, 5);
+
+// ------------------------------------------------------------------------------------------------ filiais
+function viewFiliais() {
+  const emps = Object.keys(D.emps).sort();
+  const base = D.demos.filter(x => S.per === "ANO" || x.c === S.per);
+  const tris = [...new Set(base.map(x => x.tri))].sort();
+  const met = S.metrica;
+  const f = { vp: x => x.vp, deb: x => x.deb, cred: x => x.cred, ig: x => x.ig, sc: x => x.sc }[met];
+  let h = `<div class="card"><div class="bar"><b>Comparativo entre filiais — ${S.per === "ANO" ? "ano todo" : compLabel(S.per)}</b><span class="sp"></span>${METRICAS.map(([k, n]) => `<button class="chip ${met === k ? "on" : ""}" data-met="${k}">${n}</button>`).join("")}<button class="chip" id="csvFil">⬇ CSV</button></div>
+  <div class="scroll" style="max-height:none"><table><thead><tr><th class="l">Tributo</th>${emps.map(e => `<th>${e}</th>`).join("")}<th class="tot">Total</th><th class="l">Participação</th></tr></thead><tbody>`;
+  const csv = [["Tributo", ...emps, "Total"]];
+  const cores = { SP: "#7c8cff", RJ: "#38c98b", BA: "#f0b24a" };
+  for (const t of tris) {
+    const vals = emps.map(e => {
+      const arr = base.filter(x => x.tri === t && x.e === e);
+      if (met === "sc") { const u = arr.filter(x => f(x) != null).sort((a, b) => a.c.localeCompare(b.c)); const ult = u.length ? u[u.length - 1].c : null; return ult ? soma(u.filter(x => x.c === ult), f) : null; }
+      return arr.length ? soma(arr, f) : null;
+    });
+    const tot = soma(vals.filter(v => v != null), v => v);
+    const pos = vals.map(v => Math.max(0, v || 0)), sm = pos.reduce((a, b) => a + b, 0);
+    h += `<tr><td class="l"><b>${t}</b> ${esc(triNome(t))}</td>${vals.map(v => `<td class="${cl(v)}">${fmt(v)}</td>`).join("")}<td class="tot">${fmt(tot)}</td><td class="l"><div class="bars">${sm > 0 ? emps.map((e, i) => `<i title="${e} ${Math.round(100 * pos[i] / sm)}%" style="width:${100 * pos[i] / sm}%;background:${cores[e] || "#999"}"></i>`).join("") : ""}</div></td></tr>`;
+    csv.push([`${t} ${triNome(t)}`, ...vals.map(v => v == null ? "" : String(v).replace(".", ",")), tot == null ? "" : String(tot).replace(".", ",")]);
+  }
+  h += `</tbody></table></div><div class="mut" style="margin-top:8px;font-size:12px">${emps.map(e => `<span style="color:${cores[e] || "#999"}">■</span> ${e}`).join(" &nbsp; ")}</div></div>`;
+  $("#app").innerHTML = h;
+  $("#app").onclick = e => { const b = e.target.closest("[data-met]"); if (b) { S.metrica = b.dataset.met; render(); } if (e.target.id === "csvFil") baixarCsv("comparativo-filiais.csv", csv); };
+}
+
+// ------------------------------------------------------------------------------------------------ alertas
+function geraAlertas() {
+  const A = [];
+  const escopo = D.demos.filter(x => S.emp === "ALL" || x.e === S.emp);
+  // 1) notas x total
+  for (const x of escopo) for (const k of x.conf) if (!k.ok) A.push({ sev: "bad", t: `Notas não fecham com o total — ${x.tri} ${triNome(x.tri)} ${compLabel(x.c)} (${x.e})`, d: `${esc(x.arq)} · soma ${fmt(k.soma)} × total ${fmt(k.total)}`, sel: { tri: x.tri, c: x.c } });
+  // 2) cobertura (meses mensais faltando)
+  const comps = competencias();
+  const porTri = {};
+  for (const x of escopo) { (porTri[x.e + "|" + x.tri] ||= new Set()).add(x.c); }
+  for (const [k, set] of Object.entries(porTri)) {
+    const [e, tri] = k.split("|"); if (tri === "006" || tri === "007") continue;
+    const falt = comps.filter(c => !set.has(c));
+    if (falt.length && set.size >= 2) A.push({ sev: "info", t: `Meses sem demonstrativo — ${e} · ${tri} ${triNome(tri)}`, d: "Sem arquivo em: " + falt.map(compLabel).join(", ") + " (o Domínio não gera o relatório de meses sem movimento; confira se faltou subir algum)" });
+  }
+  // 3) continuidade do saldo credor (saldo seguinte do mês = saldo anterior do mês seguinte)
+  for (const e of Object.keys(D.emps)) {
+    if (S.emp !== "ALL" && S.emp !== e) continue;
+    for (const tri of [...new Set(D.demos.filter(x => x.e === e).map(x => x.tri))]) {
+      const arr = D.demos.filter(x => x.e === e && x.tri === tri && x.sc != null && x.sca != null).sort((a, b) => a.c.localeCompare(b.c));
+      for (let i = 1; i < arr.length; i++) {
+        const mesAnt = new Date(+arr[i].c.slice(0, 4), +arr[i].c.slice(5) - 2, 1); const esperado = mesAnt.getFullYear() + "-" + String(mesAnt.getMonth() + 1).padStart(2, "0");
+        if (arr[i - 1].c === esperado && Math.abs(arr[i - 1].sc - arr[i].sca) > 0.02)
+          A.push({ sev: "bad", t: `Saldo credor não "vira" — ${e} · ${tri} ${triNome(tri)} ${compLabel(arr[i - 1].c)} → ${compLabel(arr[i].c)}`, d: `saldo credor p/ mês seguinte ${fmt(arr[i - 1].sc)} × saldo credor do período anterior ${fmt(arr[i].sca)}`, sel: { tri, c: arr[i].c } });
+      }
+    }
+  }
+  // 4) imposto das notas x débitos da apuração
+  const dif = escopo.filter(x => x.debN != null && x.debA != null && Math.abs(x.debN - x.debA) > 0.02).sort((a, b) => Math.abs(b.debN - b.debA) - Math.abs(a.debN - a.debA));
+  for (const x of dif.slice(0, 25)) A.push({ sev: "info", t: `Imposto das notas ≠ débitos da apuração — ${x.tri} ${triNome(x.tri)} ${compLabel(x.c)} (${x.e})`, d: `notas ${fmt(x.debN)} × apuração ${fmt(x.debA)} · diferença ${fmt(x.debN - x.debA)} (pode ser dispensa, compensação ou retenção tratada pela data de pagamento)`, sel: { tri: x.tri, c: x.c } });
+  if (dif.length > 25) A.push({ sev: "info", t: `…e mais ${dif.length - 25} diferenças entre notas e apuração`, d: "Veja nos demonstrativos (Painel → célula)." });
+  // 5) retenções
+  if (D.rets.length) {
+    const r = cruzaRetencoes().filter(l => (S.emp === "ALL" || l.e === S.emp) && l.st !== "ok");
+    const c = {}; r.forEach(l => c[l.st] = (c[l.st] || 0) + 1);
+    for (const [k, n] of Object.entries(c)) A.push({ sev: k === "valor diferente" ? "bad" : "warn", t: `Retenções × demonstrativos: ${n} nota(s) "${k}"`, d: "Veja a aba Retenções.", ir: k });
+  }
+  const ordem = { bad: 0, warn: 1, info: 2 };
+  return A.sort((a, b) => ordem[a.sev] - ordem[b.sev]);
+}
+function viewAlertas() {
+  const A = geraAlertas();
+  const n = s => A.filter(a => a.sev === s).length;
+  $("#app").innerHTML = `<div class="kpis"><div class="kpi"><div class="l">Críticos</div><div class="v neg">${n("bad")}</div></div><div class="kpi"><div class="l">Atenção</div><div class="v" style="color:var(--warn)">${n("warn")}</div></div><div class="kpi"><div class="l">Informativos</div><div class="v" style="color:var(--info)">${n("info")}</div></div></div>
+  <div class="card">${A.length ? A.map((a, i) => `<div class="alert"><span class="tag ${a.sev}">${{ bad: "crítico", warn: "atenção", info: "info" }[a.sev]}</span><div><b>${a.t}</b><div class="mut">${a.d}</div>${a.sel ? `<button class="lnk" data-al="${i}">ver detalhe</button>` : ""}${a.ir ? `<button class="lnk" data-ir="${esc(a.ir)}">ver retenções</button>` : ""}</div></div>`).join("") : "<div class='pos'>Nenhum alerta para o escopo selecionado.</div>"}</div>`;
+  $("#app").onclick = e => {
+    const b = e.target.closest("[data-al]"); if (b) { S.view = "painel"; S.sel = A[+b.dataset.al].sel; S.per = "ANO"; render(); setTimeout(() => $("#detalhe")?.scrollIntoView({ behavior: "smooth" }), 50); return; }
+    const r = e.target.closest("[data-ir]"); if (r) { S.view = "ret"; S.retFiltro = r.dataset.ir; render(); }
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ util
+function baixarCsv(nome, linhas) {
+  const csv = "﻿" + linhas.map(l => l.map(v => { v = String(v ?? ""); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(";")).join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = nome; a.click();
+}
+function render() {
+  montaCabecalho();
+  ({ painel: viewPainel, tributo: viewTributo, notas: viewNotas, ret: viewRet, filiais: viewFiliais, alertas: viewAlertas }[S.view])();
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.sel) { S.sel = null; const d = $("#detalhe"); if (d) d.innerHTML = ""; } });
+(async () => {
+  try { document.documentElement.dataset.tema = localStorage.tema || ""; } catch (e) { }
+  try { D = await carregar(); } catch (e) { $("#msg").textContent = "Não consegui abrir os dados (use o Chrome ou o Edge): " + e.message; return; }
+  render();
+})();
+</script>
+</body>
+</html>
