@@ -185,8 +185,8 @@ function abreExportar() {
     if (f === "resumo") baixarCsv(`resumo-${tag}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Fornecedor", "CNPJ fornecedor", "Notas", "Imposto das notas", "Débitos", "Créditos", "A recolher", "Arquivo"],
       ...L.map(x => [x.e, x.tri + " " + triNome(x.tri), compLabel(x.c), x.uf || "", x.fn || "", x.fc || "", x.docs.length, n2(x.ig), n2(x.deb), n2(x.cred), n2(x.vp), x.arq]),
       ["", "", "", "", "", "TOTAL", soma(L, x => x.docs.length), n2(soma(L, x => x.ig)), n2(soma(L, x => x.deb)), n2(soma(L, x => x.cred)), n2(soma(L, x => x.vp)), ""]]);
-    else baixarCsv(`notas-${tag}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Fornecedor", "Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base de cálculo", "Alíquota", "Imposto", "Obs", "Arquivo"],
-      ...L.flatMap(x => x.docs.map(d => [x.e, x.tri, compLabel(x.c), x.uf || "", x.fn || "", d[0] === "D" ? "Débito" : d[0] === "C" ? "Crédito" : "", d[1], d[2], d[3], d[4], n2(d[5]), n2(d[6]), n2(d[7]), n2(d[8]), d[9], x.arq]))]);
+    else baixarCsv(`notas-${tag}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Fornecedor", "Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base de cálculo", "Alíquota", "Imposto", "Imposto com sinal (crédito negativo)", "Obs", "Arquivo"],
+      ...L.flatMap(x => x.docs.map(d => [x.e, x.tri, compLabel(x.c), x.uf || "", x.fn || "", d[0] === "D" ? "Débito" : d[0] === "C" ? "Crédito" : "", d[1], d[2], d[3], d[4], n2(d[5]), n2(d[6]), n2(d[7]), n2(d[8]), n2(d[0] === "C" ? -d[8] : d[8]), d[9], x.arq]))]);
     dlg.close();
   };
   dlg.showModal();
@@ -285,8 +285,8 @@ function viewDetalhe() {
   $("#expResumo").onclick = () => baixarCsv(`total-por-uf-${base}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Fornecedor", "CNPJ fornecedor", "Notas", "Imposto das notas", "Débitos", "Créditos", "A recolher", "Arquivo"],
     ...arqs.map(x => [x.e, tri + " " + triNome(tri), compLabel(c), x.uf || "", x.fn || "", x.fc || "", x.docs.length, n2(x.ig), n2(x.deb), n2(x.cred), n2(x.vp), x.arq]),
     ["", "", "", "", "", "TOTAL", soma(arqs, x => x.docs.length), n2(soma(arqs, x => x.ig)), n2(soma(arqs, x => x.deb)), n2(soma(arqs, x => x.cred)), n2(vp), ""]]);
-  $("#expNotas").onclick = () => baixarCsv(`notas-${base}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base de cálculo", "Alíquota", "Imposto", "Obs", "Arquivo"],
-    ...arqs.flatMap(x => x.docs.map(d => [x.e, tri, compLabel(c), x.uf || "", d[0] === "D" ? "Débito" : d[0] === "C" ? "Crédito" : "", d[1], d[2], d[3], d[4], n2(d[5]), n2(d[6]), n2(d[7]), n2(d[8]), d[9], x.arq]))]);
+  $("#expNotas").onclick = () => baixarCsv(`notas-${base}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base de cálculo", "Alíquota", "Imposto", "Imposto com sinal (crédito negativo)", "Obs", "Arquivo"],
+    ...arqs.flatMap(x => x.docs.map(d => [x.e, tri, compLabel(c), x.uf || "", d[0] === "D" ? "Débito" : d[0] === "C" ? "Crédito" : "", d[1], d[2], d[3], d[4], n2(d[5]), n2(d[6]), n2(d[7]), n2(d[8]), n2(d[0] === "C" ? -d[8] : d[8]), d[9], x.arq]))]);
   el.querySelectorAll("[data-notas]").forEach(n => tabelaNotas(n, D.demos[+n.dataset.notas]));
 }
 // tabela de notas de um demonstrativo, com busca / filtro / ordenação / paginação
@@ -306,7 +306,7 @@ function tabelaNotas(el, x) {
     el.innerHTML = `<div class="bar"><input type="search" placeholder="Buscar nota / cliente…" value="${esc(st.q)}" data-f="q">
       <select data-f="tipo"><option value="">Todos os tipos</option>${tipos.map(t => `<option ${st.tipo === t ? "selected" : ""}>${t}</option>`).join("")}</select>
       ${secs.length > 1 ? `<select data-f="sec"><option value="">Todas as seções</option>${secs.map(s => `<option value="${esc(s)}" ${st.sec === s ? "selected" : ""}>${s.startsWith("D") ? "Débito" : s.startsWith("C") ? "Crédito" : "—"} · ${esc(s.split("|")[1] || "—")}</option>`).join("")}</select>` : ""}
-      <span class="sp"></span><span class="mut">${fmt0(L.length)} notas · valor contábil ${fmt(totVc)} · imposto <b>${fmt(tot)}</b></span><button class="chip" data-f="csv">⬇ CSV</button></div>
+      <span class="sp"></span><span class="mut">${fmt0(L.length)} notas · valor contábil ${fmt(totVc)} · imposto <b>${fmt(tot)}</b>${L.some(d => d[0] === "C") ? ` · <span title="Débitos − créditos (devoluções entram como crédito)">líquido <b>${fmt(soma(L, d => d[0] === "C" ? -d[8] : d[8]))}</b></span>` : ""}</span><button class="chip" data-f="csv">⬇ CSV</button></div>
       <div class="scroll"><table><thead><tr><th class="l" data-o="3">Nota</th><th class="l" data-o="2">Tipo</th><th class="l" data-o="4">Data</th><th class="l">Seção</th><th data-o="5">Valor contábil</th><th data-o="6">Base de cálculo</th><th data-o="7">Alíq. %</th><th data-o="8">Imposto</th><th class="l">Obs.</th></tr></thead><tbody>
       ${pag.map(d => `<tr><td class="l">${esc(d[3])}</td><td class="l">${esc(d[2])}</td><td class="l">${d[4]}</td><td class="l faint">${d[0] === "D" ? "Déb" : d[0] === "C" ? "Créd" : ""} ${esc(d[1])}</td><td>${fmt(d[5])}</td><td>${fmt(d[6])}</td><td>${fmt(d[7])}</td><td class="${cl(d[8])}"><b>${fmt(d[8])}</b></td><td class="l faint">${esc(d[9])}</td></tr>`).join("")}</tbody></table></div>
       <div class="pg"><button data-f="ant">‹</button><span class="mut">página ${st.pg + 1} de ${pgs}</span><button data-f="prox">›</button></div>`;
@@ -317,7 +317,7 @@ function tabelaNotas(el, x) {
     const f = e.target.closest("[data-f]")?.dataset.f;
     if (f === "ant") { st.pg = Math.max(0, st.pg - 1); desenha(); }
     if (f === "prox") { st.pg++; desenha(); }
-    if (f === "csv") baixarCsv(`notas-${x.e}-${x.tri}-${x.c}.csv`, [["Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base", "Alíquota", "Imposto", "Obs"], ...x.docs.map(d => d.map((v, i) => i >= 5 && i <= 8 ? String(v).replace(".", ",") : v))]);
+    if (f === "csv") baixarCsv(`notas-${x.e}-${x.tri}-${x.c}.csv`, [["Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base", "Alíquota", "Imposto", "Obs", "Imposto com sinal (crédito negativo)"], ...x.docs.map(d => [...d.map((v, i) => i >= 5 && i <= 8 ? String(v).replace(".", ",") : v), String(d[0] === "C" ? -d[8] : d[8]).replace(".", ",")])]);
   };
   el.onchange = e => { const f = e.target.dataset.f; if (f) { st[f] = e.target.value; st.pg = 0; desenha(); } };
   el.oninput = e => { if (e.target.dataset.f === "q") { st.q = e.target.value.toLowerCase(); st.pg = 0; const pos = e.target.selectionStart; desenha(); const i = el.querySelector("[data-f=q]"); i.focus(); i.setSelectionRange(pos, pos); } };

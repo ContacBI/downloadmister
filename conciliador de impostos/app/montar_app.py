@@ -28,6 +28,8 @@ def enxuga(d):
             if len(v) <= idx:
                 continue
             sec = "D" if (dd["sec"] or "").startswith("DÉBITOS") else "C" if (dd["sec"] or "").startswith("CRÉDITOS") else ""
+            if not sec:  # relatórios sem cabeçalho de seção (ex.: DIFAL-NC): devolução de saída reduz o imposto = crédito; o resto = débito
+                sec = "C" if (dd["mov"] or "").startswith("Devoluções de saída") else "D"
             docs.append([sec, dd["mov"] or "", dd["tipo"], dd["num"], dd["data"], v[0], v[1], v[2], v[idx], dd["txt"] or ""])
         demos.append(dict(
             e=chave[x["empresa"]], tri=tri, c=x["comp"], per=x.get("periodicidade"), uf=x.get("uf"),
