@@ -84,6 +84,8 @@ dialog{background:var(--surf);color:var(--tx);border:1px solid var(--line);borde
 .mk{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.mk b{width:13px;height:13px;border-radius:3px;border:1px solid var(--faint);display:inline-block;font:700 8px/11px system-ui;text-align:center;color:var(--faint);cursor:pointer;font-style:normal}.mk b:hover{border-color:var(--ok);color:var(--ok)}.mk b.t{color:#04140c}td.cell.feito{background:color-mix(in srgb,var(--ok) 30%,transparent)!important}td.cell.feito::after{content:"✔";color:var(--ok);margin-left:4px;font-size:11px}.mk b.p{background:linear-gradient(90deg,var(--ok) 50%,transparent 50%)}.mk b.t{background:var(--ok);border-color:var(--ok)}
 .flags{display:inline-flex;gap:10px;align-items:center;font-size:12px;color:var(--mut)}.flags label{display:inline-flex;gap:4px;align-items:center;cursor:pointer;white-space:nowrap}.flags input{accent-color:var(--ok);width:15px;height:15px;cursor:pointer}
 .prog{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}.prog .pg1{flex:1;min-width:200px;background:var(--surf);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px}.prog .barra{height:6px;background:var(--surf2);border-radius:4px;overflow:hidden;margin-top:6px}.prog .barra i{display:block;height:100%;background:var(--ok)}
+.matriz tr.subtot td{background:var(--surf2);font-weight:700;border-top:1px solid var(--line)}.matriz tr.subtot td.l{color:var(--brand)}
+.matriz tr.totgeral td{background:color-mix(in srgb,var(--brand) 18%,var(--surf));font-weight:800;border-top:2px solid var(--brand);font-size:1.08em}
 </style>
 </head>
 <body>
@@ -252,12 +254,21 @@ function viewPainel() {
   h += `<div class="scroll" style="max-height:none"><table class="matriz"><thead><tr><th class="l">Tributo</th>${comps.map(c => `<th class="mes" data-mes="${c}" title="Ver só ${compLabel(c)}">${compLabel(c)}</th>`).join("")}<th>Tendência</th><th class="tot">${S.metrica === "sc" ? "Último" : "Total"}</th></tr><tr class="mesmk"><th class="l mut" style="font-weight:400">Marcar o mês todo ↓</th>${comps.map(c => `<th>${marcaMini(arqsEscopo(null, c, comps), `data-m="${c}"`)}</th>`).join("")}<th></th><th></th></tr></thead><tbody>`;
   const linhasCsv = [["Tributo", ...comps.map(compLabel), "Total"]];
   let grpAtual = null;
+  const somaM = () => comps.map(() => null), geral = somaM(); let sub = somaM();
+  const acum = (arr, vals) => vals.forEach((v, i) => { if (v != null) arr[i] = (arr[i] ?? 0) + v; });
+  const totDe = vals => S.metrica === "sc" ? [...vals].reverse().find(v => v != null) ?? null : soma(vals.filter(v => v != null), v => v);
+  const linhaTot = (rotulo, vals, cls) => {
+    const mx = Math.max(1, ...vals.filter(v => v != null).map(Math.abs)), tt = totDe(vals);
+    linhasCsv.push([rotulo, ...vals.map(v => v == null ? "" : String(Math.round(v * 100) / 100).replace(".", ",")), tt == null ? "" : String(Math.round(tt * 100) / 100).replace(".", ",")]);
+    return `<tr class="${cls}"><td class="l">${esc(rotulo)}</td>${vals.map(v => `<td class="${cl(v)}">${v == null ? "—" : fmt(v)}</td>`).join("")}<td>${spark(competencias().map(c => { const i = comps.indexOf(c); return i >= 0 ? vals[i] : null; }))}</td><td class="tot ${cl(tt)}">${fmt(tt)}</td></tr>`;
+  };
   const ordemTris = [...tris].sort((a, b) => GRUPOS.findIndex(g => g[1].includes(a)) - GRUPOS.findIndex(g => g[1].includes(b)) || a.localeCompare(b));
   for (const t of ordemTris) {
-    if (grupoDe(t) !== grpAtual) { grpAtual = grupoDe(t); h += `<tr class="grp"><td colspan="${comps.length + 3}">${grpAtual}</td></tr>`; }
+    if (grupoDe(t) !== grpAtual) { if (grpAtual) { h += linhaTot("Total " + grpAtual, sub, "subtot"); } sub = somaM(); grpAtual = grupoDe(t); h += `<tr class="grp"><td colspan="${comps.length + 3}">${grpAtual}</td></tr>`; }
     const vals = comps.map(c => { const g = gs.get(t + "|" + c); return g ? valorGrupo(g, S.metrica) : undefined; });
     const maxv = Math.max(1, ...vals.filter(v => v != null).map(Math.abs));
     const tot = S.metrica === "sc" ? [...vals].reverse().find(v => v != null) ?? null : soma(vals.filter(v => v != null), v => v);
+    acum(sub, vals); acum(geral, vals);
     const hist = competencias().map(c => { const g = grupos(false).get(t + "|" + c); return g ? valorGrupo(g, S.metrica) : null; });
     h += `<tr><td class="l rowlink" data-tri-row="${t}" title="Ver a evolução mês a mês"><b>${t}</b> ${esc(triNome(t))}${marcaMini(arqsEscopo(t, null, comps), `data-t="${t}"`)}</td>`;
     comps.forEach((c, i) => {
@@ -271,6 +282,8 @@ function viewPainel() {
     h += `<td>${spark(hist)}</td><td class="tot ${cl(tot)}">${fmt(tot)}</td></tr>`;
     linhasCsv.push([`${t} ${triNome(t)}`, ...vals.map(v => v == null ? "" : String(v).replace(".", ",")), tot == null ? "" : String(tot).replace(".", ",")]);
   }
+  if (grpAtual) h += linhaTot("Total " + grpAtual, sub, "subtot");
+  h += linhaTot("TOTAL GERAL", geral, "totgeral");
   h += `</tbody></table></div><div class="mut" style="margin-top:8px;font-size:12px">Clique numa célula para ver o detalhe (apuração, conferência e notas). Células hachuradas = sem demonstrativo naquele mês. <i class="dot"></i> = alguma seção não fecha com o total.</div></div>`;
   $("#app").innerHTML = h + `<div id="detalhe"></div>`;
   $("#app").onclick = e => {
