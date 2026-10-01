@@ -18,7 +18,7 @@ nav button.on,.chip.on{background:var(--brand);border-color:var(--brand);color:#
 nav button:hover:not(.on),.chip:hover:not(.on){color:var(--tx);border-color:var(--faint)}
 .sp{flex:1}
 select,input[type=search],input[type=text]{background:var(--surf2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit}
-main{padding:18px 20px 60px;max-width:1500px;margin:0 auto}
+main{padding:18px clamp(12px,2vw,40px) 60px;max-width:none;margin:0 auto}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
 .kpi{background:var(--surf);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
 .kpi .l{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em}
@@ -35,7 +35,7 @@ th:first-child,td:first-child{text-align:left}
 td.l,th.l{text-align:left}
 tbody tr{border-bottom:1px solid var(--line)}
 tbody tr:hover{background:var(--surf2)}
-.matriz td.cell{cursor:pointer;min-width:92px;border-left:1px solid var(--line)}
+table.matriz{width:100%;font-size:clamp(12px,.78vw,15px)}.matriz td,.matriz th{padding-top:clamp(6px,.8vh,13px)!important;padding-bottom:clamp(6px,.8vh,13px)!important}.matriz td.cell{cursor:pointer;min-width:74px;white-space:nowrap;border-left:1px solid var(--line)}
 .matriz td.cell:hover{outline:1px solid var(--brand);outline-offset:-1px}
 .matriz td.sem{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--surf2) 5px 10px);color:var(--faint);cursor:default;text-align:center}
 .matriz td.zero{color:var(--faint)}
