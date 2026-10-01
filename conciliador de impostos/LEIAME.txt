@@ -1,0 +1,4 @@
+Pasta: conciliador de impostos
+
+Coloque aqui os arquivos para o conciliador (relatorios de impostos, guias, extratos, balancetes etc.).
+Sugestao de organizacao: uma subpasta por mes (ex.: 2026-09) e, dentro, uma por empresa.
