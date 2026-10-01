@@ -219,7 +219,7 @@ function viewDetalhe() {
   const el = $("#detalhe");
   if (!arqs.length) { el.innerHTML = ""; return; }
   const vp = soma(arqs, x => x.vp);
-  let h = `<div class="card"><div class="bar"><h2 style="margin:0">${tri} ${esc(triNome(tri))} · ${compLabel(c)} · ${S.emp === "ALL" ? "todas as empresas" : S.emp}</h2><span class="sp"></span><span class="tag info">${arqs.length} arquivo(s)</span><span class="tag ${vp > 0.005 ? "warn" : ""}">A recolher ${fmt(vp)}</span><button class="chip" id="fechaDet">✕ fechar</button></div>`;
+  let h = `<div class="card"><div class="bar"><h2 style="margin:0">${tri} ${esc(triNome(tri))} · ${compLabel(c)} · ${S.emp === "ALL" ? "todas as empresas" : S.emp}</h2><span class="sp"></span><span class="tag info">${arqs.length} arquivo(s)</span><span class="tag ${vp > 0.005 ? "warn" : ""}">A recolher ${fmt(vp)}</span><button class="chip" id="expResumo" title="Uma linha por UF / fornecedor, com total">⬇ Total por ${arqs.some(x => x.uf) ? "UF" : "arquivo"} (CSV)</button><button class="chip" id="expNotas" title="Uma linha por nota, de todos os arquivos deste tributo/mês">⬇ Todas as notas (CSV)</button><button class="chip" id="fechaDet">✕ fechar</button></div>`;
   const multi = arqs.length > 6;
   arqs.sort((a, b) => (a.e + (a.uf || "") + (a.fn || "")).localeCompare(b.e + (b.uf || "") + (b.fn || "")));
   if (multi) {
@@ -241,6 +241,13 @@ function viewDetalhe() {
   });
   el.innerHTML = h + "</div>";
   $("#fechaDet").onclick = () => { S.sel = null; el.innerHTML = ""; };
+  const n2 = v => v == null ? "" : String(v).replace(".", ",");
+  const base = `${tri}-${c}-${S.emp === "ALL" ? "todas" : S.emp}`;
+  $("#expResumo").onclick = () => baixarCsv(`total-por-uf-${base}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Fornecedor", "CNPJ fornecedor", "Notas", "Imposto das notas", "Débitos", "Créditos", "A recolher", "Arquivo"],
+    ...arqs.map(x => [x.e, tri + " " + triNome(tri), compLabel(c), x.uf || "", x.fn || "", x.fc || "", x.docs.length, n2(x.ig), n2(x.deb), n2(x.cred), n2(x.vp), x.arq]),
+    ["", "", "", "", "", "TOTAL", soma(arqs, x => x.docs.length), n2(soma(arqs, x => x.ig)), n2(soma(arqs, x => x.deb)), n2(soma(arqs, x => x.cred)), n2(vp), ""]]);
+  $("#expNotas").onclick = () => baixarCsv(`notas-${base}.csv`, [["Empresa", "Tributo", "Competência", "UF", "Seção", "Movimento", "Tipo", "Nota", "Data", "Valor contábil", "Base de cálculo", "Alíquota", "Imposto", "Obs", "Arquivo"],
+    ...arqs.flatMap(x => x.docs.map(d => [x.e, tri, compLabel(c), x.uf || "", d[0] === "D" ? "Débito" : d[0] === "C" ? "Crédito" : "", d[1], d[2], d[3], d[4], n2(d[5]), n2(d[6]), n2(d[7]), n2(d[8]), d[9], x.arq]))]);
   el.querySelectorAll("[data-notas]").forEach(n => tabelaNotas(n, D.demos[+n.dataset.notas]));
 }
 // tabela de notas de um demonstrativo, com busca / filtro / ordenação / paginação
